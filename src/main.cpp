@@ -7,7 +7,7 @@ const char* ssid = "S23";
 const char* password = "12345678.";
 
 // MQTT
-const char* mqtt_server = "192.168.1.100";
+const char* mqtt_server = "192.168.56.126";
 const char* mqtt_topic = "braco/comando";
 
 WiFiClient espClient;
@@ -23,6 +23,7 @@ PubSubClient client(espClient);
 Servo servBase, servEsquerda, servDireita;
 
 void setup_wifi() {
+  WiFi.mode(WIFI_STA);
   WiFi.begin(ssid, password);
   while (WiFi.status() != WL_CONNECTED) {
     delay(500);
@@ -55,10 +56,13 @@ void callback(char* topic, byte* payload, unsigned int length) {
   int direito  = msg.substring(sep2 + 1, sep3).toInt();
   int magnet   = msg.substring(sep3 + 1).toInt();
 
+  Serial.printf("----> %d %d %d %d \n", base, esquerdo, direito, magnet);
+
   // Aplica comandos
   servBase.write(base);
   servEsquerda.write(esquerdo);
   servDireita.write(direito);
+
   digitalWrite(pinMagnet, magnet == 1 ? HIGH : LOW);
 }
 
@@ -70,6 +74,15 @@ void reconnect() {
       delay(5000);
     }
   }
+}
+
+void posDefault() {
+  servBase.write(180);
+  delay(500);
+  servEsquerda.write(180);
+  delay(500);
+  servDireita.write(40);
+  delay(500);
 }
 
 void setup() {
@@ -84,6 +97,7 @@ void setup() {
   setup_wifi();
   client.setServer(mqtt_server, 1883);
   client.setCallback(callback);
+  posDefault();
 }
 
 void loop() {
@@ -92,3 +106,6 @@ void loop() {
   }
   client.loop();
 }
+
+
+
