@@ -31,7 +31,7 @@ const SERVO_CONFIG = {
 
 const UI_CONFIG = {
   AUTO_PUBLISH: true, // Publicação automática
-  DEBOUNCE_MS: 100, // Delay para evitar spam de mensagens
+  DEBOUNCE_MS: 50, // Delay para evitar spam de mensagens
 };
 
 export default function ChessRobotController() {
@@ -147,6 +147,7 @@ export default function ChessRobotController() {
   }, []);
 
   return (
+
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-4">
       <div className="max-w-4xl mx-auto space-y-6">
         {/* Header */}
@@ -158,24 +159,13 @@ export default function ChessRobotController() {
                   <span className="text-slate-900 font-bold text-sm">♔</span>
                 </div>
                 <div>
-                  <CardTitle className="text-2xl font-bold text-white">
-                    Chess Robot Controller
-                  </CardTitle>
-                  <p className="text-slate-400 text-sm">
-                    Controle robótico para movimentação de peças
-                  </p>
+                  <CardTitle className="text-2xl font-bold text-white">Chess Robot Controller</CardTitle>
+                  <p className="text-slate-400 text-sm">Controle robótico para movimentação de peças</p>
                 </div>
               </div>
               <div className="flex items-center space-x-2">
-                <Badge
-                  variant={isConnected ? "default" : "destructive"}
-                  className="flex items-center space-x-1"
-                >
-                  {isConnected ? (
-                    <Wifi className="w-3 h-3" />
-                  ) : (
-                    <WifiOff className="w-3 h-3" />
-                  )}
+                <Badge variant={isConnected ? "default" : "destructive"} className="flex items-center space-x-1">
+                  {isConnected ? <Wifi className="w-3 h-3" /> : <WifiOff className="w-3 h-3" />}
                   <span>{isConnected ? "Conectado" : "Desconectado"}</span>
                 </Badge>
                 <Button
@@ -211,18 +201,10 @@ export default function ChessRobotController() {
                 />
               </div>
               <div className="flex space-x-2">
-                <Button
-                  onClick={connectToBroker}
-                  disabled={isConnected}
-                  className="bg-green-600 hover:bg-green-700"
-                >
+                <Button onClick={connectToBroker} disabled={isConnected} className="bg-green-600 hover:bg-green-700">
                   Conectar
                 </Button>
-                <Button
-                  onClick={disconnect}
-                  disabled={!isConnected}
-                  variant="destructive"
-                >
+                <Button onClick={disconnect} disabled={!isConnected} variant="destructive">
                   Desconectar
                 </Button>
               </div>
@@ -237,24 +219,69 @@ export default function ChessRobotController() {
             <CardHeader>
               <CardTitle className="text-white flex items-center justify-between">
                 Servo Base
-                <Badge
-                  variant="secondary"
-                  className="bg-slate-700 text-slate-300"
-                >
+                <Badge variant="secondary" className="bg-slate-700 text-slate-300">
                   {baseAngle[0]}°
                 </Badge>
               </CardTitle>
             </CardHeader>
-            <CardContent>
-              <Slider
-                value={baseAngle}
-                onValueChange={setBaseAngle}
-                max={SERVO_CONFIG.MAX_ANGLE}
-                min={SERVO_CONFIG.MIN_ANGLE}
-                step={1}
-                className="w-full"
-              />
-              <div className="flex justify-between text-xs text-slate-400 mt-2">
+            <CardContent className="px-6 py-8">
+              <div className="relative">
+                <div
+                  className="w-full h-12 bg-slate-700 rounded-lg cursor-pointer relative overflow-hidden"
+                  onClick={(e) => {
+                    const rect = e.currentTarget.getBoundingClientRect()
+                    const x = e.clientX - rect.left
+                    const percentage = x / rect.width
+                    const newValue = Math.round(
+                      percentage * (SERVO_CONFIG.MAX_ANGLE - SERVO_CONFIG.MIN_ANGLE) + SERVO_CONFIG.MIN_ANGLE,
+                    )
+                    const clampedValue = Math.max(SERVO_CONFIG.MIN_ANGLE, Math.min(SERVO_CONFIG.MAX_ANGLE, newValue))
+                    setBaseAngle([clampedValue])
+                  }}
+                >
+                  {/* Barra preenchida */}
+                  <div
+                    className="h-full bg-gradient-to-r from-amber-500 to-amber-400 rounded-lg transition-all duration-150"
+                    style={{
+                      width: `${((baseAngle[0] - SERVO_CONFIG.MIN_ANGLE) / (SERVO_CONFIG.MAX_ANGLE - SERVO_CONFIG.MIN_ANGLE)) * 100}%`,
+                    }}
+                  />
+                  {/* Indicador de posição */}
+                  <div
+                    className="absolute top-1/2 transform -translate-y-1/2 w-6 h-6 bg-white rounded-full shadow-lg border-2 border-amber-400 cursor-grab active:cursor-grabbing"
+                    style={{
+                      left: `calc(${((baseAngle[0] - SERVO_CONFIG.MIN_ANGLE) / (SERVO_CONFIG.MAX_ANGLE - SERVO_CONFIG.MIN_ANGLE)) * 100}% - 12px)`,
+                    }}
+                    onMouseDown={(e) => {
+                      e.preventDefault()
+                      const startX = e.clientX
+                      const startValue = baseAngle[0]
+                      const rect = e.currentTarget.parentElement!.getBoundingClientRect()
+
+                      const handleMouseMove = (e: MouseEvent) => {
+                        const deltaX = e.clientX - startX
+                        const deltaPercentage = deltaX / rect.width
+                        const deltaValue = deltaPercentage * (SERVO_CONFIG.MAX_ANGLE - SERVO_CONFIG.MIN_ANGLE)
+                        const newValue = Math.round(startValue + deltaValue)
+                        const clampedValue = Math.max(
+                          SERVO_CONFIG.MIN_ANGLE,
+                          Math.min(SERVO_CONFIG.MAX_ANGLE, newValue),
+                        )
+                        setBaseAngle([clampedValue])
+                      }
+
+                      const handleMouseUp = () => {
+                        document.removeEventListener("mousemove", handleMouseMove)
+                        document.removeEventListener("mouseup", handleMouseUp)
+                      }
+
+                      document.addEventListener("mousemove", handleMouseMove)
+                      document.addEventListener("mouseup", handleMouseUp)
+                    }}
+                  />
+                </div>
+              </div>
+              <div className="flex justify-between text-xs text-slate-400 mt-4">
                 <span>{SERVO_CONFIG.MIN_ANGLE}°</span>
                 <span>{SERVO_CONFIG.MAX_ANGLE}°</span>
               </div>
@@ -266,24 +293,69 @@ export default function ChessRobotController() {
             <CardHeader>
               <CardTitle className="text-white flex items-center justify-between">
                 Servo Esquerdo
-                <Badge
-                  variant="secondary"
-                  className="bg-slate-700 text-slate-300"
-                >
+                <Badge variant="secondary" className="bg-slate-700 text-slate-300">
                   {leftAngle[0]}°
                 </Badge>
               </CardTitle>
             </CardHeader>
-            <CardContent>
-              <Slider
-                value={leftAngle}
-                onValueChange={setLeftAngle}
-                max={SERVO_CONFIG.MAX_ANGLE}
-                min={SERVO_CONFIG.MIN_ANGLE}
-                step={1}
-                className="w-full"
-              />
-              <div className="flex justify-between text-xs text-slate-400 mt-2">
+            <CardContent className="px-6 py-8">
+              <div className="relative">
+                <div
+                  className="w-full h-12 bg-slate-700 rounded-lg cursor-pointer relative overflow-hidden"
+                  onClick={(e) => {
+                    const rect = e.currentTarget.getBoundingClientRect()
+                    const x = e.clientX - rect.left
+                    const percentage = x / rect.width
+                    const newValue = Math.round(
+                      percentage * (SERVO_CONFIG.MAX_ANGLE - SERVO_CONFIG.MIN_ANGLE) + SERVO_CONFIG.MIN_ANGLE,
+                    )
+                    const clampedValue = Math.max(SERVO_CONFIG.MIN_ANGLE, Math.min(SERVO_CONFIG.MAX_ANGLE, newValue))
+                    setLeftAngle([clampedValue])
+                  }}
+                >
+                  {/* Barra preenchida */}
+                  <div
+                    className="h-full bg-gradient-to-r from-blue-500 to-blue-400 rounded-lg transition-all duration-150"
+                    style={{
+                      width: `${((leftAngle[0] - SERVO_CONFIG.MIN_ANGLE) / (SERVO_CONFIG.MAX_ANGLE - SERVO_CONFIG.MIN_ANGLE)) * 100}%`,
+                    }}
+                  />
+                  {/* Indicador de posição */}
+                  <div
+                    className="absolute top-1/2 transform -translate-y-1/2 w-6 h-6 bg-white rounded-full shadow-lg border-2 border-blue-400 cursor-grab active:cursor-grabbing"
+                    style={{
+                      left: `calc(${((leftAngle[0] - SERVO_CONFIG.MIN_ANGLE) / (SERVO_CONFIG.MAX_ANGLE - SERVO_CONFIG.MIN_ANGLE)) * 100}% - 12px)`,
+                    }}
+                    onMouseDown={(e) => {
+                      e.preventDefault()
+                      const startX = e.clientX
+                      const startValue = leftAngle[0]
+                      const rect = e.currentTarget.parentElement!.getBoundingClientRect()
+
+                      const handleMouseMove = (e: MouseEvent) => {
+                        const deltaX = e.clientX - startX
+                        const deltaPercentage = deltaX / rect.width
+                        const deltaValue = deltaPercentage * (SERVO_CONFIG.MAX_ANGLE - SERVO_CONFIG.MIN_ANGLE)
+                        const newValue = Math.round(startValue + deltaValue)
+                        const clampedValue = Math.max(
+                          SERVO_CONFIG.MIN_ANGLE,
+                          Math.min(SERVO_CONFIG.MAX_ANGLE, newValue),
+                        )
+                        setLeftAngle([clampedValue])
+                      }
+
+                      const handleMouseUp = () => {
+                        document.removeEventListener("mousemove", handleMouseMove)
+                        document.removeEventListener("mouseup", handleMouseUp)
+                      }
+
+                      document.addEventListener("mousemove", handleMouseMove)
+                      document.addEventListener("mouseup", handleMouseUp)
+                    }}
+                  />
+                </div>
+              </div>
+              <div className="flex justify-between text-xs text-slate-400 mt-4">
                 <span>{SERVO_CONFIG.MIN_ANGLE}°</span>
                 <span>{SERVO_CONFIG.MAX_ANGLE}°</span>
               </div>
@@ -295,24 +367,69 @@ export default function ChessRobotController() {
             <CardHeader>
               <CardTitle className="text-white flex items-center justify-between">
                 Servo Direito
-                <Badge
-                  variant="secondary"
-                  className="bg-slate-700 text-slate-300"
-                >
+                <Badge variant="secondary" className="bg-slate-700 text-slate-300">
                   {rightAngle[0]}°
                 </Badge>
               </CardTitle>
             </CardHeader>
-            <CardContent>
-              <Slider
-                value={rightAngle}
-                onValueChange={setRightAngle}
-                max={SERVO_CONFIG.MAX_ANGLE}
-                min={SERVO_CONFIG.MIN_ANGLE}
-                step={1}
-                className="w-full"
-              />
-              <div className="flex justify-between text-xs text-slate-400 mt-2">
+            <CardContent className="px-6 py-8">
+              <div className="relative">
+                <div
+                  className="w-full h-12 bg-slate-700 rounded-lg cursor-pointer relative overflow-hidden"
+                  onClick={(e) => {
+                    const rect = e.currentTarget.getBoundingClientRect()
+                    const x = e.clientX - rect.left
+                    const percentage = x / rect.width
+                    const newValue = Math.round(
+                      percentage * (SERVO_CONFIG.MAX_ANGLE - SERVO_CONFIG.MIN_ANGLE) + SERVO_CONFIG.MIN_ANGLE,
+                    )
+                    const clampedValue = Math.max(SERVO_CONFIG.MIN_ANGLE, Math.min(SERVO_CONFIG.MAX_ANGLE, newValue))
+                    setRightAngle([clampedValue])
+                  }}
+                >
+                  {/* Barra preenchida */}
+                  <div
+                    className="h-full bg-gradient-to-r from-green-500 to-green-400 rounded-lg transition-all duration-150"
+                    style={{
+                      width: `${((rightAngle[0] - SERVO_CONFIG.MIN_ANGLE) / (SERVO_CONFIG.MAX_ANGLE - SERVO_CONFIG.MIN_ANGLE)) * 100}%`,
+                    }}
+                  />
+                  {/* Indicador de posição */}
+                  <div
+                    className="absolute top-1/2 transform -translate-y-1/2 w-6 h-6 bg-white rounded-full shadow-lg border-2 border-green-400 cursor-grab active:cursor-grabbing"
+                    style={{
+                      left: `calc(${((rightAngle[0] - SERVO_CONFIG.MIN_ANGLE) / (SERVO_CONFIG.MAX_ANGLE - SERVO_CONFIG.MIN_ANGLE)) * 100}% - 12px)`,
+                    }}
+                    onMouseDown={(e) => {
+                      e.preventDefault()
+                      const startX = e.clientX
+                      const startValue = rightAngle[0]
+                      const rect = e.currentTarget.parentElement!.getBoundingClientRect()
+
+                      const handleMouseMove = (e: MouseEvent) => {
+                        const deltaX = e.clientX - startX
+                        const deltaPercentage = deltaX / rect.width
+                        const deltaValue = deltaPercentage * (SERVO_CONFIG.MAX_ANGLE - SERVO_CONFIG.MIN_ANGLE)
+                        const newValue = Math.round(startValue + deltaValue)
+                        const clampedValue = Math.max(
+                          SERVO_CONFIG.MIN_ANGLE,
+                          Math.min(SERVO_CONFIG.MAX_ANGLE, newValue),
+                        )
+                        setRightAngle([clampedValue])
+                      }
+
+                      const handleMouseUp = () => {
+                        document.removeEventListener("mousemove", handleMouseMove)
+                        document.removeEventListener("mouseup", handleMouseUp)
+                      }
+
+                      document.addEventListener("mousemove", handleMouseMove)
+                      document.addEventListener("mouseup", handleMouseUp)
+                    }}
+                  />
+                </div>
+              </div>
+              <div className="flex justify-between text-xs text-slate-400 mt-4">
                 <span>{SERVO_CONFIG.MIN_ANGLE}°</span>
                 <span>{SERVO_CONFIG.MAX_ANGLE}°</span>
               </div>
@@ -326,9 +443,7 @@ export default function ChessRobotController() {
                 Eletroímã
                 <Badge
                   variant={magnetActive ? "default" : "secondary"}
-                  className={
-                    magnetActive ? "bg-red-600" : "bg-slate-700 text-slate-300"
-                  }
+                  className={magnetActive ? "bg-red-600" : "bg-slate-700 text-slate-300"}
                 >
                   {magnetActive ? "ATIVO" : "INATIVO"}
                 </Badge>
@@ -341,9 +456,7 @@ export default function ChessRobotController() {
                   onCheckedChange={setMagnetActive}
                   className="data-[state=checked]:bg-red-600"
                 />
-                <Label className="text-slate-300">
-                  {magnetActive ? "Eletroímã ligado" : "Eletroímã desligado"}
-                </Label>
+                <Label className="text-slate-300">{magnetActive ? "Eletroímã ligado" : "Eletroímã desligado"}</Label>
               </div>
             </CardContent>
           </Card>
@@ -357,9 +470,7 @@ export default function ChessRobotController() {
           <CardContent className="space-y-4">
             <div className="grid md:grid-cols-2 gap-4">
               <div>
-                <Label className="text-slate-300">
-                  Última Mensagem Enviada:
-                </Label>
+                <Label className="text-slate-300">Última Mensagem Enviada:</Label>
                 <div className="bg-slate-700 p-3 rounded-lg font-mono text-sm text-green-400 mt-1">
                   {lastMessage || "Nenhuma mensagem enviada"}
                 </div>
@@ -368,18 +479,14 @@ export default function ChessRobotController() {
                 <Label className="text-slate-300">Estatísticas:</Label>
                 <div className="space-y-1 mt-1">
                   <div className="text-sm text-slate-400">
-                    Tópico:{" "}
-                    <span className="text-amber-400">{MQTT_CONFIG.TOPIC}</span>
+                    Tópico: <span className="text-amber-400">{MQTT_CONFIG.TOPIC}</span>
                   </div>
                   <div className="text-sm text-slate-400">
-                    Mensagens enviadas:{" "}
-                    <span className="text-green-400">{messageCount}</span>
+                    Mensagens enviadas: <span className="text-green-400">{messageCount}</span>
                   </div>
                   <div className="text-sm text-slate-400">
                     Publicação automática:{" "}
-                    <span className="text-blue-400">
-                      {UI_CONFIG.AUTO_PUBLISH ? "Ativada" : "Desativada"}
-                    </span>
+                    <span className="text-blue-400">{UI_CONFIG.AUTO_PUBLISH ? "Ativada" : "Desativada"}</span>
                   </div>
                 </div>
               </div>
@@ -396,11 +503,7 @@ export default function ChessRobotController() {
                 <RotateCcw className="w-4 h-4 mr-2" />
                 Reset Posições
               </Button>
-              <Button
-                onClick={publishMessage}
-                disabled={!isConnected}
-                className="bg-amber-600 hover:bg-amber-700"
-              >
+              <Button onClick={publishMessage} disabled={!isConnected} className="bg-amber-600 hover:bg-amber-700">
                 Enviar Comando Manual
               </Button>
             </div>
@@ -414,12 +517,8 @@ export default function ChessRobotController() {
           </CardHeader>
           <CardContent>
             <div className="bg-slate-900 p-4 rounded-lg border border-slate-600">
-              <div className="text-xs text-slate-400 mb-2">
-                Formato: base|esquerdo|direito|magnet
-              </div>
-              <div className="font-mono text-lg text-amber-400">
-                {createMessage()}
-              </div>
+              <div className="text-xs text-slate-400 mb-2">Formato: base|esquerdo|direito|magnet</div>
+              <div className="font-mono text-lg text-amber-400">{createMessage()}</div>
             </div>
           </CardContent>
         </Card>
