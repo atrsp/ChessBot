@@ -20,13 +20,14 @@ const MQTT_CONFIG = {
   PASSWORD: "", // Deixe vazio se não precisar
 }
 
+
 const SERVO_CONFIG = {
-  MIN_ANGLE: 0,
-  MAX_ANGLE: 180,
-  DEFAULT_BASE: 60,
-  DEFAULT_LEFT: 180,
-  DEFAULT_RIGHT: 90,
-  FINE_ADJUSTMENT: 1, // Incremento para ajuste fino
+  MIN_ANGLE: 500,
+  MAX_ANGLE: 2500,
+  DEFAULT_BASE: 1500,
+  DEFAULT_LEFT: 2200,
+  DEFAULT_RIGHT: 800,
+  FINE_ADJUSTMENT: 10, // Incremento para ajuste fino
 }
 
 const UI_CONFIG = {
