@@ -1,16 +1,15 @@
-"use client";
+"use client"
 
-import { useState, useEffect, useCallback, useRef } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Slider } from "@/components/ui/slider";
-import { Switch } from "@/components/ui/switch";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
-import { Settings, Wifi, WifiOff, RotateCcw } from "lucide-react";
-import mqtt from "mqtt";
+import { useState, useEffect, useCallback, useRef } from "react"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Switch } from "@/components/ui/switch"
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Separator } from "@/components/ui/separator"
+import { Settings, Wifi, WifiOff, RotateCcw, Plus, Minus, Send } from "lucide-react"
+import mqtt from "mqtt"
 
 // ==================== CONSTANTES CONFIGURÁVEIS ====================
 const MQTT_CONFIG = {
@@ -19,7 +18,7 @@ const MQTT_CONFIG = {
   CLIENT_ID: "chess-robot-controller",
   USERNAME: "", // Deixe vazio se não precisar
   PASSWORD: "", // Deixe vazio se não precisar
-};
+}
 
 const SERVO_CONFIG = {
   MIN_ANGLE: 0,
@@ -27,127 +26,177 @@ const SERVO_CONFIG = {
   DEFAULT_BASE: 60,
   DEFAULT_LEFT: 180,
   DEFAULT_RIGHT: 90,
-};
+  FINE_ADJUSTMENT: 1, // Incremento para ajuste fino
+}
 
 const UI_CONFIG = {
   AUTO_PUBLISH: true, // Publicação automática
   DEBOUNCE_MS: 50, // Delay para evitar spam de mensagens
-};
+}
 
 export default function ChessRobotController() {
   // Estados dos servos e eletroímã
-  const [baseAngle, setBaseAngle] = useState([SERVO_CONFIG.DEFAULT_BASE]);
-  const [leftAngle, setLeftAngle] = useState([SERVO_CONFIG.DEFAULT_LEFT]);
-  const [rightAngle, setRightAngle] = useState([SERVO_CONFIG.DEFAULT_RIGHT]);
-  const [magnetActive, setMagnetActive] = useState(false);
+  const [baseAngle, setBaseAngle] = useState([SERVO_CONFIG.DEFAULT_BASE])
+  const [leftAngle, setLeftAngle] = useState([SERVO_CONFIG.DEFAULT_LEFT])
+  const [rightAngle, setRightAngle] = useState([SERVO_CONFIG.DEFAULT_RIGHT])
+  const [magnetActive, setMagnetActive] = useState(false)
+
+  // Estados para comandos de posição específica
+  const [baseCommand, setBaseCommand] = useState("")
+  const [leftCommand, setLeftCommand] = useState("")
+  const [rightCommand, setRightCommand] = useState("")
 
   // Estados de conexão
-  const [client, setClient] = useState<any>(null);
-  const clientRef = useRef<any>(null);
-  const [lastMessage, setLastMessage] = useState("");
-  const [messageCount, setMessageCount] = useState(0);
-  const [isConnected, setIsConnected] = useState(false);
+  const [client, setClient] = useState<any>(null)
+  const clientRef = useRef<any>(null)
+  const [lastMessage, setLastMessage] = useState("")
+  const [messageCount, setMessageCount] = useState(0)
+  const [isConnected, setIsConnected] = useState(false)
 
   // Estados de configuração
-  const [brokerUrl, setBrokerUrl] = useState(MQTT_CONFIG.BROKER_URL);
-  const [showSettings, setShowSettings] = useState(false);
+  const [brokerUrl, setBrokerUrl] = useState(MQTT_CONFIG.BROKER_URL)
+  const [showSettings, setShowSettings] = useState(false)
 
   // Função para criar mensagem no formato: base|esquerdo|direito|magnet
   const createMessage = useCallback(() => {
-    return `${baseAngle[0]}|${leftAngle[0]}|${rightAngle[0]}|${
-      magnetActive ? 1 : 0
-    }`;
-  }, [baseAngle, leftAngle, rightAngle, magnetActive]);
+    return `${baseAngle[0]}|${leftAngle[0]}|${rightAngle[0]}|${magnetActive ? 1 : 0}`
+  }, [baseAngle, leftAngle, rightAngle, magnetActive])
 
   // Função para publicar mensagem
   const publishMessage = useCallback(() => {
-    if (!clientRef.current || !isConnected) return;
+    if (!clientRef.current || !isConnected) return
 
-    const message = createMessage();
+    const message = createMessage()
     try {
       clientRef.current.publish(MQTT_CONFIG.TOPIC, message, {}, (err: any) => {
         if (err) {
-          console.error("Erro ao publicar:", err);
+          console.error("Erro ao publicar:", err)
         } else {
-          setLastMessage(message);
-          setMessageCount((prev) => prev + 1);
+          setLastMessage(message)
+          setMessageCount((prev) => prev + 1)
         }
-      });
+      })
     } catch (error) {
-      console.error("Erro ao publicar:", error);
+      console.error("Erro ao publicar:", error)
     }
-  }, [createMessage, isConnected]);
+  }, [createMessage, isConnected])
+
+  // Funções de ajuste fino para cada servo
+  const adjustBaseAngle = useCallback((increment: number) => {
+    setBaseAngle((prev) => {
+      const newValue = prev[0] + increment
+      const clampedValue = Math.max(SERVO_CONFIG.MIN_ANGLE, Math.min(SERVO_CONFIG.MAX_ANGLE, newValue))
+      return [clampedValue]
+    })
+  }, [])
+
+  const adjustLeftAngle = useCallback((increment: number) => {
+    setLeftAngle((prev) => {
+      const newValue = prev[0] + increment
+      const clampedValue = Math.max(SERVO_CONFIG.MIN_ANGLE, Math.min(SERVO_CONFIG.MAX_ANGLE, newValue))
+      return [clampedValue]
+    })
+  }, [])
+
+  const adjustRightAngle = useCallback((increment: number) => {
+    setRightAngle((prev) => {
+      const newValue = prev[0] + increment
+      const clampedValue = Math.max(SERVO_CONFIG.MIN_ANGLE, Math.min(SERVO_CONFIG.MAX_ANGLE, newValue))
+      return [clampedValue]
+    })
+  }, [])
+
+  // Funções para definir posição específica de cada servo
+  const setBasePosition = useCallback(() => {
+    const position = Number.parseInt(baseCommand)
+    if (isNaN(position)) return
+
+    const clampedValue = Math.max(SERVO_CONFIG.MIN_ANGLE, Math.min(SERVO_CONFIG.MAX_ANGLE, position))
+    setBaseAngle([clampedValue])
+    setBaseCommand("")
+  }, [baseCommand])
+
+  const setLeftPosition = useCallback(() => {
+    const position = Number.parseInt(leftCommand)
+    if (isNaN(position)) return
+
+    const clampedValue = Math.max(SERVO_CONFIG.MIN_ANGLE, Math.min(SERVO_CONFIG.MAX_ANGLE, position))
+    setLeftAngle([clampedValue])
+    setLeftCommand("")
+  }, [leftCommand])
+
+  const setRightPosition = useCallback(() => {
+    const position = Number.parseInt(rightCommand)
+    if (isNaN(position)) return
+
+    const clampedValue = Math.max(SERVO_CONFIG.MIN_ANGLE, Math.min(SERVO_CONFIG.MAX_ANGLE, position))
+    setRightAngle([clampedValue])
+    setRightCommand("")
+  }, [rightCommand])
 
   // Conectar ao broker MQTT
   const connectToBroker = useCallback(() => {
-    if (clientRef.current) return; // já conectado
+    if (clientRef.current) return // já conectado
 
     const options = {
       connectTimeout: 4000,
       // username: 'seu-usuario', // se necessário
       // password: 'sua-senha',
-    };
+    }
 
-    const mqttClient = mqtt.connect(brokerUrl, options);
+    const mqttClient = mqtt.connect(brokerUrl, options)
 
     mqttClient.on("connect", () => {
-      clientRef.current = mqttClient;
-      setClient(mqttClient);
-      setIsConnected(true);
-      console.log("Conectado ao broker MQTT");
-    });
+      clientRef.current = mqttClient
+      setClient(mqttClient)
+      setIsConnected(true)
+      console.log("Conectado ao broker MQTT")
+    })
 
     mqttClient.on("error", (err) => {
-      console.error("Erro ao conectar:", err);
-      mqttClient.end();
-    });
-  }, [brokerUrl]);
+      console.error("Erro ao conectar:", err)
+      mqttClient.end()
+    })
+  }, [brokerUrl])
 
   // Desconectar do broker
   const disconnect = useCallback(() => {
-    if (!clientRef.current) return;
-    clientRef.current.end();
-    clientRef.current = null;
-    setClient(null);
-    setIsConnected(false);
-    console.log("Desconectado do broker MQTT");
-  }, []);
+    if (!clientRef.current) return
+
+    clientRef.current.end()
+    clientRef.current = null
+    setClient(null)
+    setIsConnected(false)
+    console.log("Desconectado do broker MQTT")
+  }, [])
 
   // Reset para posições padrão
   const resetToDefault = useCallback(() => {
-    setBaseAngle([SERVO_CONFIG.DEFAULT_BASE]);
-    setLeftAngle([SERVO_CONFIG.DEFAULT_LEFT]);
-    setRightAngle([SERVO_CONFIG.DEFAULT_RIGHT]);
-    setMagnetActive(false);
-  }, []);
+    setBaseAngle([SERVO_CONFIG.DEFAULT_BASE])
+    setLeftAngle([SERVO_CONFIG.DEFAULT_LEFT])
+    setRightAngle([SERVO_CONFIG.DEFAULT_RIGHT])
+    setMagnetActive(false)
+  }, [])
 
   // Publicação automática com debounce
   useEffect(() => {
-    if (!UI_CONFIG.AUTO_PUBLISH || !isConnected) return;
+    if (!UI_CONFIG.AUTO_PUBLISH || !isConnected) return
 
     const timeoutId = setTimeout(() => {
-      publishMessage();
-    }, UI_CONFIG.DEBOUNCE_MS);
+      publishMessage()
+    }, UI_CONFIG.DEBOUNCE_MS)
 
-    return () => clearTimeout(timeoutId);
-  }, [
-    baseAngle,
-    leftAngle,
-    rightAngle,
-    magnetActive,
-    publishMessage,
-    isConnected,
-  ]);
+    return () => clearTimeout(timeoutId)
+  }, [baseAngle, leftAngle, rightAngle, magnetActive, publishMessage, isConnected])
 
   // Conectar automaticamente ao carregar
   useEffect(() => {
-    connectToBroker();
-    return () => disconnect();
+    connectToBroker()
+    return () => disconnect()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [])
 
   return (
-
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-4">
       <div className="max-w-4xl mx-auto space-y-6">
         {/* Header */}
@@ -224,7 +273,8 @@ export default function ChessRobotController() {
                 </Badge>
               </CardTitle>
             </CardHeader>
-            <CardContent className="px-6 py-8">
+            <CardContent className="px-6 py-8 space-y-4">
+              {/* Slider Visual Customizado */}
               <div className="relative">
                 <div
                   className="w-full h-12 bg-slate-700 rounded-lg cursor-pointer relative overflow-hidden"
@@ -239,14 +289,12 @@ export default function ChessRobotController() {
                     setBaseAngle([clampedValue])
                   }}
                 >
-                  {/* Barra preenchida */}
                   <div
                     className="h-full bg-gradient-to-r from-amber-500 to-amber-400 rounded-lg transition-all duration-150"
                     style={{
                       width: `${((baseAngle[0] - SERVO_CONFIG.MIN_ANGLE) / (SERVO_CONFIG.MAX_ANGLE - SERVO_CONFIG.MIN_ANGLE)) * 100}%`,
                     }}
                   />
-                  {/* Indicador de posição */}
                   <div
                     className="absolute top-1/2 transform -translate-y-1/2 w-6 h-6 bg-white rounded-full shadow-lg border-2 border-amber-400 cursor-grab active:cursor-grabbing"
                     style={{
@@ -257,7 +305,6 @@ export default function ChessRobotController() {
                       const startX = e.clientX
                       const startValue = baseAngle[0]
                       const rect = e.currentTarget.parentElement!.getBoundingClientRect()
-
                       const handleMouseMove = (e: MouseEvent) => {
                         const deltaX = e.clientX - startX
                         const deltaPercentage = deltaX / rect.width
@@ -269,18 +316,64 @@ export default function ChessRobotController() {
                         )
                         setBaseAngle([clampedValue])
                       }
-
                       const handleMouseUp = () => {
                         document.removeEventListener("mousemove", handleMouseMove)
                         document.removeEventListener("mouseup", handleMouseUp)
                       }
-
                       document.addEventListener("mousemove", handleMouseMove)
                       document.addEventListener("mouseup", handleMouseUp)
                     }}
                   />
                 </div>
               </div>
+
+              {/* Botões de Ajuste Fino */}
+              <div className="flex items-center justify-center space-x-4">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => adjustBaseAngle(-SERVO_CONFIG.FINE_ADJUSTMENT)}
+                  disabled={baseAngle[0] <= SERVO_CONFIG.MIN_ANGLE}
+                  className="border-slate-600 text-slate-300 hover:bg-slate-700 bg-transparent"
+                >
+                  <Minus className="w-4 h-4" />
+                </Button>
+                <span className="text-slate-300 text-sm font-mono min-w-[60px] text-center">{baseAngle[0]}°</span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => adjustBaseAngle(SERVO_CONFIG.FINE_ADJUSTMENT)}
+                  disabled={baseAngle[0] >= SERVO_CONFIG.MAX_ANGLE}
+                  className="border-slate-600 text-slate-300 hover:bg-slate-700 bg-transparent"
+                >
+                  <Plus className="w-4 h-4" />
+                </Button>
+              </div>
+
+              {/* Comando de Posição Específica */}
+              <div className="space-y-2">
+                <Label className="text-slate-300 text-sm">Definir Posição Específica:</Label>
+                <div className="flex space-x-2">
+                  <Input
+                    type="number"
+                    min={SERVO_CONFIG.MIN_ANGLE}
+                    max={SERVO_CONFIG.MAX_ANGLE}
+                    value={baseCommand}
+                    onChange={(e) => setBaseCommand(e.target.value)}
+                    placeholder={`${SERVO_CONFIG.MIN_ANGLE}-${SERVO_CONFIG.MAX_ANGLE}`}
+                    className="bg-slate-700 border-slate-600 text-white text-sm"
+                  />
+                  <Button
+                    size="sm"
+                    onClick={setBasePosition}
+                    disabled={!baseCommand || isNaN(Number.parseInt(baseCommand))}
+                    className="bg-amber-600 hover:bg-amber-700"
+                  >
+                    <Send className="w-4 h-4" />
+                  </Button>
+                </div>
+              </div>
+
               <div className="flex justify-between text-xs text-slate-400 mt-4">
                 <span>{SERVO_CONFIG.MIN_ANGLE}°</span>
                 <span>{SERVO_CONFIG.MAX_ANGLE}°</span>
@@ -298,7 +391,8 @@ export default function ChessRobotController() {
                 </Badge>
               </CardTitle>
             </CardHeader>
-            <CardContent className="px-6 py-8">
+            <CardContent className="px-6 py-8 space-y-4">
+              {/* Slider Visual Customizado */}
               <div className="relative">
                 <div
                   className="w-full h-12 bg-slate-700 rounded-lg cursor-pointer relative overflow-hidden"
@@ -313,14 +407,12 @@ export default function ChessRobotController() {
                     setLeftAngle([clampedValue])
                   }}
                 >
-                  {/* Barra preenchida */}
                   <div
                     className="h-full bg-gradient-to-r from-blue-500 to-blue-400 rounded-lg transition-all duration-150"
                     style={{
                       width: `${((leftAngle[0] - SERVO_CONFIG.MIN_ANGLE) / (SERVO_CONFIG.MAX_ANGLE - SERVO_CONFIG.MIN_ANGLE)) * 100}%`,
                     }}
                   />
-                  {/* Indicador de posição */}
                   <div
                     className="absolute top-1/2 transform -translate-y-1/2 w-6 h-6 bg-white rounded-full shadow-lg border-2 border-blue-400 cursor-grab active:cursor-grabbing"
                     style={{
@@ -331,7 +423,6 @@ export default function ChessRobotController() {
                       const startX = e.clientX
                       const startValue = leftAngle[0]
                       const rect = e.currentTarget.parentElement!.getBoundingClientRect()
-
                       const handleMouseMove = (e: MouseEvent) => {
                         const deltaX = e.clientX - startX
                         const deltaPercentage = deltaX / rect.width
@@ -343,18 +434,64 @@ export default function ChessRobotController() {
                         )
                         setLeftAngle([clampedValue])
                       }
-
                       const handleMouseUp = () => {
                         document.removeEventListener("mousemove", handleMouseMove)
                         document.removeEventListener("mouseup", handleMouseUp)
                       }
-
                       document.addEventListener("mousemove", handleMouseMove)
                       document.addEventListener("mouseup", handleMouseUp)
                     }}
                   />
                 </div>
               </div>
+
+              {/* Botões de Ajuste Fino */}
+              <div className="flex items-center justify-center space-x-4">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => adjustLeftAngle(-SERVO_CONFIG.FINE_ADJUSTMENT)}
+                  disabled={leftAngle[0] <= SERVO_CONFIG.MIN_ANGLE}
+                  className="border-slate-600 text-slate-300 hover:bg-slate-700 bg-transparent"
+                >
+                  <Minus className="w-4 h-4" />
+                </Button>
+                <span className="text-slate-300 text-sm font-mono min-w-[60px] text-center">{leftAngle[0]}°</span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => adjustLeftAngle(SERVO_CONFIG.FINE_ADJUSTMENT)}
+                  disabled={leftAngle[0] >= SERVO_CONFIG.MAX_ANGLE}
+                  className="border-slate-600 text-slate-300 hover:bg-slate-700 bg-transparent"
+                >
+                  <Plus className="w-4 h-4" />
+                </Button>
+              </div>
+
+              {/* Comando de Posição Específica */}
+              <div className="space-y-2">
+                <Label className="text-slate-300 text-sm">Definir Posição Específica:</Label>
+                <div className="flex space-x-2">
+                  <Input
+                    type="number"
+                    min={SERVO_CONFIG.MIN_ANGLE}
+                    max={SERVO_CONFIG.MAX_ANGLE}
+                    value={leftCommand}
+                    onChange={(e) => setLeftCommand(e.target.value)}
+                    placeholder={`${SERVO_CONFIG.MIN_ANGLE}-${SERVO_CONFIG.MAX_ANGLE}`}
+                    className="bg-slate-700 border-slate-600 text-white text-sm"
+                  />
+                  <Button
+                    size="sm"
+                    onClick={setLeftPosition}
+                    disabled={!leftCommand || isNaN(Number.parseInt(leftCommand))}
+                    className="bg-blue-600 hover:bg-blue-700"
+                  >
+                    <Send className="w-4 h-4" />
+                  </Button>
+                </div>
+              </div>
+
               <div className="flex justify-between text-xs text-slate-400 mt-4">
                 <span>{SERVO_CONFIG.MIN_ANGLE}°</span>
                 <span>{SERVO_CONFIG.MAX_ANGLE}°</span>
@@ -372,7 +509,8 @@ export default function ChessRobotController() {
                 </Badge>
               </CardTitle>
             </CardHeader>
-            <CardContent className="px-6 py-8">
+            <CardContent className="px-6 py-8 space-y-4">
+              {/* Slider Visual Customizado */}
               <div className="relative">
                 <div
                   className="w-full h-12 bg-slate-700 rounded-lg cursor-pointer relative overflow-hidden"
@@ -387,14 +525,12 @@ export default function ChessRobotController() {
                     setRightAngle([clampedValue])
                   }}
                 >
-                  {/* Barra preenchida */}
                   <div
                     className="h-full bg-gradient-to-r from-green-500 to-green-400 rounded-lg transition-all duration-150"
                     style={{
                       width: `${((rightAngle[0] - SERVO_CONFIG.MIN_ANGLE) / (SERVO_CONFIG.MAX_ANGLE - SERVO_CONFIG.MIN_ANGLE)) * 100}%`,
                     }}
                   />
-                  {/* Indicador de posição */}
                   <div
                     className="absolute top-1/2 transform -translate-y-1/2 w-6 h-6 bg-white rounded-full shadow-lg border-2 border-green-400 cursor-grab active:cursor-grabbing"
                     style={{
@@ -405,7 +541,6 @@ export default function ChessRobotController() {
                       const startX = e.clientX
                       const startValue = rightAngle[0]
                       const rect = e.currentTarget.parentElement!.getBoundingClientRect()
-
                       const handleMouseMove = (e: MouseEvent) => {
                         const deltaX = e.clientX - startX
                         const deltaPercentage = deltaX / rect.width
@@ -417,18 +552,64 @@ export default function ChessRobotController() {
                         )
                         setRightAngle([clampedValue])
                       }
-
                       const handleMouseUp = () => {
                         document.removeEventListener("mousemove", handleMouseMove)
                         document.removeEventListener("mouseup", handleMouseUp)
                       }
-
                       document.addEventListener("mousemove", handleMouseMove)
                       document.addEventListener("mouseup", handleMouseUp)
                     }}
                   />
                 </div>
               </div>
+
+              {/* Botões de Ajuste Fino */}
+              <div className="flex items-center justify-center space-x-4">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => adjustRightAngle(-SERVO_CONFIG.FINE_ADJUSTMENT)}
+                  disabled={rightAngle[0] <= SERVO_CONFIG.MIN_ANGLE}
+                  className="border-slate-600 text-slate-300 hover:bg-slate-700 bg-transparent"
+                >
+                  <Minus className="w-4 h-4" />
+                </Button>
+                <span className="text-slate-300 text-sm font-mono min-w-[60px] text-center">{rightAngle[0]}°</span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => adjustRightAngle(SERVO_CONFIG.FINE_ADJUSTMENT)}
+                  disabled={rightAngle[0] >= SERVO_CONFIG.MAX_ANGLE}
+                  className="border-slate-600 text-slate-300 hover:bg-slate-700 bg-transparent"
+                >
+                  <Plus className="w-4 h-4" />
+                </Button>
+              </div>
+
+              {/* Comando de Posição Específica */}
+              <div className="space-y-2">
+                <Label className="text-slate-300 text-sm">Definir Posição Específica:</Label>
+                <div className="flex space-x-2">
+                  <Input
+                    type="number"
+                    min={SERVO_CONFIG.MIN_ANGLE}
+                    max={SERVO_CONFIG.MAX_ANGLE}
+                    value={rightCommand}
+                    onChange={(e) => setRightCommand(e.target.value)}
+                    placeholder={`${SERVO_CONFIG.MIN_ANGLE}-${SERVO_CONFIG.MAX_ANGLE}`}
+                    className="bg-slate-700 border-slate-600 text-white text-sm"
+                  />
+                  <Button
+                    size="sm"
+                    onClick={setRightPosition}
+                    disabled={!rightCommand || isNaN(Number.parseInt(rightCommand))}
+                    className="bg-green-600 hover:bg-green-700"
+                  >
+                    <Send className="w-4 h-4" />
+                  </Button>
+                </div>
+              </div>
+
               <div className="flex justify-between text-xs text-slate-400 mt-4">
                 <span>{SERVO_CONFIG.MIN_ANGLE}°</span>
                 <span>{SERVO_CONFIG.MAX_ANGLE}°</span>
@@ -491,9 +672,7 @@ export default function ChessRobotController() {
                 </div>
               </div>
             </div>
-
             <Separator className="bg-slate-600" />
-
             <div className="flex space-x-2">
               <Button
                 onClick={resetToDefault}
@@ -524,5 +703,5 @@ export default function ChessRobotController() {
         </Card>
       </div>
     </div>
-  );
+  )
 }

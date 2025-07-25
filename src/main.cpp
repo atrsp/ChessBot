@@ -7,7 +7,7 @@ const char* ssid = "S23";
 const char* password = "12345678.";
 
 // MQTT
-const char* mqtt_server = "192.168.56.126";
+const char* mqtt_server = "192.168.83.126";
 const char* mqtt_topic = "braco/comando";
 
 WiFiClient espClient;
@@ -17,7 +17,7 @@ PubSubClient client(espClient);
 #define pinServBase     18
 #define pinServEsquerda 19
 #define pinServDireita  21
-#define pinMagnet       22
+#define pinMagnet       32
 
 // Servos
 Servo servBase, servEsquerda, servDireita;
