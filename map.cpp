@@ -7,8 +7,9 @@
 const char* ssid = "S23";
 const char* password = "12345678.";
 
+
 // MQTT
-const char* mqtt_server = "192.168.83.126";
+const char* mqtt_server = "192.168.155.126";
 const char* mqtt_topic = "braco/comando";
 
 WiFiClient espClient;
@@ -118,7 +119,7 @@ void reconnect() {
 void posDefault() {
   moverServoSuave(servBase, posBase, 2500);
   delay(100);
-  moverServoSuave(servEsquerda, posEsquerda, 2500);
+  moverServoSuave(servEsquerda, posEsquerda, 2680);
   delay(100);
   moverServoSuave(servDireita, posDireita, 1100);
   delay(100);
