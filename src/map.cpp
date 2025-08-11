@@ -9,7 +9,7 @@ const char* password = "12345678.";
 
 
 // MQTT
-const char* mqtt_server = "192.168.155.126";
+const char* mqtt_server = "192.168.210.126";
 const char* mqtt_topic = "braco/comando";
 
 WiFiClient espClient;
