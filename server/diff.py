@@ -116,7 +116,7 @@ def crop_red_border_custom(image, top=40, bottom=20, left=40, right=40):
     return resized
 
 
-def preprocess_diff(gray1, gray2, blur_ksize=(5,5), threshold_val=50, morph_kernel_size=(5,5)):
+def preprocess_diff(gray1, gray2, blur_ksize=(9,9), threshold_val=60, morph_kernel_size=(5,5)):
     """
     Takes two grayscale images, applies Gaussian blur, computes absolute difference,
     thresholds and applies morphological opening and closing.
@@ -236,12 +236,11 @@ def diff(before, after):
     cell_w = width // 8
     cell_h = height // 8
 
+    thresh = preprocess_diff(before, after)
 
-    before_gray = cv2.cvtColor(before, cv2.COLOR_BGR2GRAY)
-    after_gray = cv2.cvtColor(after, cv2.COLOR_BGR2GRAY)
+    thresh_gray = cv2.cvtColor(thresh, cv2.COLOR_BGR2GRAY)
 
-    thresh = preprocess_diff(before_gray, after_gray)
-    _, contours = draw_contours(before, thresh)
+    _, contours = draw_contours(before, thresh_gray)
     _, centers = draw_centers(before, contours)
 
     changed_squares = get_changed_squares(centers, cell_w, cell_h)

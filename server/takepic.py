@@ -8,7 +8,7 @@ def capturar_fotos_antes_depois():
     """
     
     # Inicializa a câmera (0 é geralmente a câmera padrão)
-    cap = cv2.VideoCapture(0)
+    cap = cv2.VideoCapture(2)
     
     # Verifica se a câmera foi aberta corretamente
     if not cap.isOpened():
@@ -31,10 +31,10 @@ def capturar_fotos_antes_depois():
         
         # Mostra o frame atual
         if not foto_antes_capturada:
-            cv2.putText(frame, "Pressione ESPACO para foto ANTES", (10, 30), 
+            cv2.putText(frame, "", (10, 30), 
                        cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
         else:
-            cv2.putText(frame, "Pressione ESPACO para foto DEPOIS", (10, 30), 
+            cv2.putText(frame, "", (10, 30), 
                        cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
         
         cv2.imshow('Camera - Antes e Depois', frame)
@@ -70,7 +70,7 @@ def capturar_com_delay():
     """
     Versão alternativa: captura as fotos automaticamente com delay
     """
-    cap = cv2.VideoCapture(0)
+    cap = cv2.VideoCapture(2)
     
     if not cap.isOpened():
         print("Erro: Não foi possível acessar a câmera")
