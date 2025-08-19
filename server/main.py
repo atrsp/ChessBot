@@ -118,9 +118,9 @@ def get_best_move():
 
     piece = board.piece_at(move.to_square)
 
-
-
     print(origin, destiny)
+
+    board.push(move)
 
     return jsonify({
         "from": origin,
