@@ -1,4 +1,4 @@
-//#include <ArduinoJson.h>
+#include <ArduinoJson.h>
 #include <HTTPClient.h>
 
 #include <board.hpp>
@@ -10,9 +10,9 @@
 #define pinServoRight 21
 #define pinMagnet 32
 
-ServoChess  servoBase(pinServoBase, POS_INITIAL_BASE);
-ServoChess  servoLeft(pinServoLeft, POS_INITIAL_LEFT);
-ServoChess  servoRight(pinServoRight, POS_INITIAL_RIGHT);
+ServoChess  servoBase(pinServoBase, POS_INITIAL.base);
+ServoChess  servoLeft(pinServoLeft, POS_INITIAL.left);
+ServoChess  servoRight(pinServoRight, POS_INITIAL.right);
 HTTPClient  http;
 const char* server = "http://172.20.10.2:5000";
 
@@ -39,7 +39,6 @@ class BestMove {
     bool captured;
 
     BestMove() {
-
     }
 
     BestMove(Move from, Move to, bool captured) {
@@ -48,15 +47,6 @@ class BestMove {
         this->captured = captured;
     }
 };
-
-void setup() {
-    Serial.begin(115200);
-
-    setup_wifi("Vitor", "20212022");
-
-    pinMode(pinMagnet, OUTPUT);
-    digitalWrite(pinMagnet, LOW);
-}
 
 void gotoPositionDown(ServoPosition p) {
     servoBase.move(p.base);
@@ -87,6 +77,10 @@ void traverse_board() {
     }
 }
 
+void waitKey() {
+    delay(15000);
+}
+
 void disableMagnet() {
     digitalWrite(pinMagnet, LOW);
 }
@@ -96,11 +90,12 @@ void enableMagnet() {
 }
 
 void captureBoardState() {
-    gotoPositionDown(camera);
+    gotoPositionDown(POS_CAMERA);
     delay(500);
     String url = String(server) + String("/capture-board-state");
     http.begin(url);
     int httpCode = http.GET();
+    http.end();
 }
 
 BestMove getBestMove() {
@@ -109,34 +104,44 @@ BestMove getBestMove() {
     int httpCode = http.GET();
 
     Serial.println(httpCode);
+    Serial.printf("HTTP CODE DO BEST MOVE: %d\n", httpCode);
 
     if (httpCode == 200) {
-        String                  payload = http.getString();
-        // StaticJsonDocument<256> doc;
-        // DeserializationError    error = deserializeJson(doc, payload);
+        String payload = http.getString();
+        Serial.println(payload);
+        StaticJsonDocument<256> doc;
+        DeserializationError    error = deserializeJson(doc, payload);
 
-        // if (!error) {
-        //     int from_row = doc["from"][0];
-        //     int from_col = doc["from"][1];
-        //     int to_row   = doc["to"][0];
-        //     int to_col   = doc["to"][1];
-        //     Move from(from_row, from_col);
-        //     Move to(to_row, to_col);
+        if (!error) {
+            int  from_row = doc["from"][0];
+            int  from_col = doc["from"][1];
+            int  to_row   = doc["to"][0];
+            int  to_col   = doc["to"][1];
+            Move from(from_row, from_col);
+            Move to(to_row, to_col);
 
-        //     //Serial.printf("From: (%d, %d)\n", from_row, from_col);
-        //     //Serial.printf("To: (%d, %d)\n", to_row, to_col);
+            Serial.printf("From: (%d, %d)\n", from_row, from_col);
+            Serial.printf("To: (%d, %d)\n", to_row, to_col);
 
-        //     return BestMove(from, to, false);
-        // }
+            return BestMove(from, to, false);
+        }
     }
+
+    http.end();
+
+    Serial.println("Deu merdaaa!!!!!!!!!!!!!!!");
+
+    while (Serial.available() == 0) delay(100);
+    Serial.read();
+
     return BestMove();
 }
 
 void executeRobotMove(BestMove move) {
     Serial.println("Executando jogada no ROBO...");
-    
+
     ServoPosition from = CHESSBOARD_POSITIONS[move.from.row][move.from.column];
-    ServoPosition to = CHESSBOARD_POSITIONS[move.to.row][move.to.column];
+    ServoPosition to   = CHESSBOARD_POSITIONS[move.to.row][move.to.column];
 
     gotoPositionDown(from);
     delay(1000);
@@ -151,28 +156,47 @@ void executeRobotMove(BestMove move) {
 }
 
 void waitOpponentMove() {
-    Serial.println("Press ENTER to confirm opponent move...");
-
-    while (Serial.available() == 0) delay(100);
-    Serial.read();
-
-    String url = String(server) + String("/confirm-opponent-move");
-    http.begin(url);
-    int httpCode = http.GET();
+    Serial.println("15 segundos para fazer a jogada");
+    waitKey();
 }
 
 void confirmRobotMove() {
-    Serial.println("Press ENTER to confirm robot move...");
+    Serial.println("15 segundos para CONFIRMAR a jogada");
+    waitKey();
+}
 
-    while (Serial.available() == 0) delay(100);
-    Serial.read();
+void resetGame() {
+    String url = String(server) + String("/reset");
+    http.begin(url);
+    int httpCode = http.GET();
+    http.end();
+}
+
+void setup() {
+    Serial.begin(115200);
+
+    setup_wifi("Vitor", "20212022");
+
+    pinMode(pinMagnet, OUTPUT);
+    digitalWrite(pinMagnet, LOW);
+
+    resetGame();
 }
 
 void loop() {
-    traverse_board();
-    //captureBoardState();
-    //waitOpponentMove();
-    //BestMove move = getBestMove();
-    //executeRobotMove(move);
-    //confirmRobotMove();
+    captureBoardState();
+    waitOpponentMove();
+
+    int httpCode = -1;
+
+    while (httpCode < 0) {
+        http.begin("http://172.20.10.2:5000/confirm-opponent-move");
+        httpCode = http.GET();
+        http.end();
+        Serial.printf("HTT CODE: %d\n", httpCode);
+    }
+
+    BestMove move = getBestMove();
+    executeRobotMove(move);
+    confirmRobotMove();
 }

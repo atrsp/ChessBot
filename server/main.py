@@ -37,6 +37,17 @@ def get_latest_frame(cap, discard=10):
     ret, frame = cap.read()
     return ret, frame
 
+
+@app.route("/reset", methods=["GET"])
+def reset_board():
+    global board
+    board = chess.Board()
+    return f"<pre>{board}</pre>", 200
+
+@app.route("/view", methods=["GET"])
+def view():
+    return f"<pre>{board}</pre>", 200
+
 @app.route("/capture-board-state", methods=["GET"])
 def capture_board_state():
     global img1
@@ -131,6 +142,7 @@ def get_best_move():
 
 if __name__ == "__main__":
     try:
+        get_latest_frame(cap)
         app.run(host="0.0.0.0", port=5000)
     finally:
         engine.quit()

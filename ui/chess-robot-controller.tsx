@@ -13,7 +13,7 @@ import mqtt from "mqtt"
 
 // ==================== CONSTANTES CONFIGURÁVEIS ====================
 const MQTT_CONFIG = {
-  BROKER_URL: "mqtt://172.20.10.2:9001", // Altere para seu broker
+  BROKER_URL: "mqtt://localhost:9001", // Altere para seu broker
   TOPIC: "braco/comando",
   CLIENT_ID: "chess-robot-controller",
   USERNAME: "", // Deixe vazio se não precisar
