@@ -1,5 +1,6 @@
 #include <ArduinoJson.h>
 #include <HTTPClient.h>
+#include <Bounce2.h>
 
 #include <board.hpp>
 #include <servo.hpp>
@@ -8,6 +9,7 @@
 #define pinServoBase 18
 #define pinServoLeft 19
 #define pinServoRight 21
+#define pinConfirm 25
 #define pinMagnet 32
 
 ServoChess  servoBase(pinServoBase, POS_INITIAL.base);
@@ -15,6 +17,7 @@ ServoChess  servoLeft(pinServoLeft, POS_INITIAL.left);
 ServoChess  servoRight(pinServoRight, POS_INITIAL.right);
 HTTPClient  http;
 const char* server = "http://172.20.10.2:5000";
+Bounce confirm = Bounce();
 
 ServoPosition p = CHESSBOARD_POSITIONS[6][6];
 
@@ -78,7 +81,12 @@ void traverse_board() {
 }
 
 void waitKey() {
-    delay(15000);
+    while(1) {
+        confirm.update();
+        if (confirm.fell()) {
+            break;
+        }
+    }
 }
 
 void disableMagnet() {
@@ -180,23 +188,33 @@ void setup() {
     pinMode(pinMagnet, OUTPUT);
     digitalWrite(pinMagnet, LOW);
 
+    pinMode(pinConfirm, INPUT_PULLUP);
+    confirm.attach(pinConfirm);
+    confirm.interval(50);
+
     resetGame();
 }
 
 void loop() {
+    confirm.update();    
+    
+    
     captureBoardState();
     waitOpponentMove();
-
+ 
     int httpCode = -1;
-
+ 
     while (httpCode < 0) {
         http.begin("http://172.20.10.2:5000/confirm-opponent-move");
         httpCode = http.GET();
         http.end();
         Serial.printf("HTT CODE: %d\n", httpCode);
     }
-
+ 
     BestMove move = getBestMove();
     executeRobotMove(move);
     confirmRobotMove();
+    
+
+
 }
