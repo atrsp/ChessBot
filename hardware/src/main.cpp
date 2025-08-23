@@ -1,6 +1,6 @@
 #include <ArduinoJson.h>
-#include <HTTPClient.h>
 #include <Bounce2.h>
+#include <HTTPClient.h>
 
 #include <board.hpp>
 #include <servo.hpp>
@@ -16,10 +16,8 @@ ServoChess  servoBase(pinServoBase, POS_INITIAL.base);
 ServoChess  servoLeft(pinServoLeft, POS_INITIAL.left);
 ServoChess  servoRight(pinServoRight, POS_INITIAL.right);
 HTTPClient  http;
-const char* server = "http://172.20.10.2:5000";
-Bounce confirm = Bounce();
-
-ServoPosition p = CHESSBOARD_POSITIONS[6][6];
+const char* server  = "http://192.168.245.126:5000";
+Bounce      confirm = Bounce();
 
 class Move {
    public:
@@ -51,16 +49,61 @@ class BestMove {
     }
 };
 
-void gotoPositionDown(ServoPosition p) {
+void gotoPositionDown(ServoPosition p, VerticalTuning f) {
     servoBase.move(p.base);
+
+    servoRight.move(p.right, f.percent);
+    servoLeft.move(p.left, f.percent);
+
+    int remainingLeft  = abs(servoLeft.position - p.left);
+    int remainingRight = abs(servoRight.position - p.right);
+
+    int stepsRight = remainingRight / f.deltaRight;
+    int stepsLeft  = remainingLeft / f.deltaLeft;
+
+    while (stepsRight > 0 and stepsLeft > 0) {
+        if (stepsLeft > 0 and servoLeft.position != p.left) {
+            servoLeft.moveStep(p.left, f.deltaLeft);
+            stepsLeft--;
+        }
+        if (stepsRight > 0 and servoRight.position != p.right) {
+            servoRight.moveStep(p.right, f.deltaRight);
+            stepsRight--;
+        }
+    }
+
     servoRight.move(p.right);
     servoLeft.move(p.left);
 }
 
-void gotoPositionUp(ServoPosition p) {
-    servoBase.move(p.base);
+void gotoPositionUp(ServoPosition p, VerticalTuning f) {
+    int remainingLeft  = abs(servoLeft.position - p.left * f.percent);
+    int remainingRight = abs(servoRight.position - p.right * f.percent);
+
+    int stepsRight = remainingRight / f.deltaRight;
+    int stepsLeft  = remainingLeft / f.deltaLeft;
+
+    while (stepsRight > 0 and stepsLeft > 0) {
+        if (stepsRight > 0 and servoRight.position != p.right) {
+            servoRight.moveStep(p.right, f.deltaRight);
+            stepsRight--;
+        }
+        if (stepsLeft > 0 and servoLeft.position != p.left) {
+            servoLeft.moveStep(p.left, f.deltaLeft);
+            stepsLeft--;
+        }
+    }
+
     servoRight.move(p.right);
     servoLeft.move(p.left);
+
+    servoBase.move(p.base);
+}
+
+void gotoPositionCamera() {
+    servoBase.move(POS_CAMERA.base);
+    servoRight.move(POS_CAMERA.right);
+    servoLeft.move(POS_CAMERA.left);
 }
 
 void gotoPositionDefault() {
@@ -69,19 +112,8 @@ void gotoPositionDefault() {
     servoBase.pos_default();
 }
 
-void traverse_board() {
-    for (int i = 7; i >= 0; i--) {
-        for (int j = 7; j >= 0; j--) {
-            ServoPosition p = CHESSBOARD_POSITIONS[i][j];
-            gotoPositionDown(p);
-            digitalWrite(pinMagnet, HIGH);
-            gotoPositionDefault();
-        }
-    }
-}
-
 void waitKey() {
-    while(1) {
+    while (1) {
         confirm.update();
         if (confirm.fell()) {
             break;
@@ -98,7 +130,7 @@ void enableMagnet() {
 }
 
 void captureBoardState() {
-    gotoPositionDown(POS_CAMERA);
+    gotoPositionCamera();
     delay(500);
     String url = String(server) + String("/capture-board-state");
     http.begin(url);
@@ -125,13 +157,15 @@ BestMove getBestMove() {
             int  from_col = doc["from"][1];
             int  to_row   = doc["to"][0];
             int  to_col   = doc["to"][1];
+            bool captured = doc["captured"];
             Move from(from_row, from_col);
             Move to(to_row, to_col);
 
             Serial.printf("From: (%d, %d)\n", from_row, from_col);
             Serial.printf("To: (%d, %d)\n", to_row, to_col);
+            Serial.printf("Captured: %d \n", captured);
 
-            return BestMove(from, to, false);
+            return BestMove(from, to, captured);
         }
     }
 
@@ -148,19 +182,35 @@ BestMove getBestMove() {
 void executeRobotMove(BestMove move) {
     Serial.println("Executando jogada no ROBO...");
 
-    ServoPosition from = CHESSBOARD_POSITIONS[move.from.row][move.from.column];
-    ServoPosition to   = CHESSBOARD_POSITIONS[move.to.row][move.to.column];
+    ServoPosition  from = CHESSBOARD_POSITIONS[move.from.row][move.from.column];
+    VerticalTuning from_vt =
+        CHESSBOARD_VERTICAL_TUNNING[move.from.row][move.from.column];
 
-    gotoPositionDown(from);
+    ServoPosition  to = CHESSBOARD_POSITIONS[move.to.row][move.to.column];
+    VerticalTuning to_vt =
+        CHESSBOARD_VERTICAL_TUNNING[move.to.row][move.to.column];
+
+    if (move.captured) {
+        gotoPositionDown(to, to_vt);
+        delay(500);
+        enableMagnet();
+        gotoPositionUp(POS_THRASH, to_vt);
+        delay(500);
+        disableMagnet();
+        gotoPositionDefault();
+    }
+
+    gotoPositionDown(from, from_vt);
     delay(1000);
     enableMagnet();
     delay(500);
-    gotoPositionDefault();
+    gotoPositionUp(POS_INITIAL, from_vt);
+
     delay(1000);
-    gotoPositionDown(to);
+    gotoPositionDown(to, to_vt);
     delay(500);
     disableMagnet();
-    gotoPositionDefault();
+    gotoPositionUp(POS_INITIAL, to_vt);
 }
 
 void waitOpponentMove() {
@@ -183,7 +233,7 @@ void resetGame() {
 void setup() {
     Serial.begin(115200);
 
-    setup_wifi("Vitor", "20212022");
+    setup_wifi("S23", "12345678.");
 
     pinMode(pinMagnet, OUTPUT);
     digitalWrite(pinMagnet, LOW);
@@ -191,30 +241,43 @@ void setup() {
     pinMode(pinConfirm, INPUT_PULLUP);
     confirm.attach(pinConfirm);
     confirm.interval(50);
+    gotoPositionDefault();
 
     resetGame();
 }
 
 void loop() {
-    confirm.update();    
-    
-    
+    // enableMagnet();
+    // delay(5000);
+    // for (int i = 3; i < 8; i++) {
+    //     for (int j = 0; j < 8; j++) {
+    //         ServoPosition p = CHESSBOARD_POSITIONS[i][j];
+    //         VerticalTuning f = CHESSBOARD_VERTICAL_TUNNING[i][j];
+    //         gotoPositionDown(p, f);
+    //         delay(1000);
+    //         gotoPositionUp(POS_INITIAL, f);
+    //         delay(5000);
+    //     }
+    // }
+
+    // disableMagnet();
+    // while (1);
+
     captureBoardState();
     waitOpponentMove();
- 
+
     int httpCode = -1;
- 
+
     while (httpCode < 0) {
-        http.begin("http://172.20.10.2:5000/confirm-opponent-move");
+        String url = String(server) + String("/confirm-opponent-move");
+
+        http.begin(url);
         httpCode = http.GET();
         http.end();
         Serial.printf("HTT CODE: %d\n", httpCode);
     }
- 
+
     BestMove move = getBestMove();
     executeRobotMove(move);
     confirmRobotMove();
-    
-
-
 }

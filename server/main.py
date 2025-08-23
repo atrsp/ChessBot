@@ -8,7 +8,7 @@ from diff import diff
 app = Flask(__name__)
 board = chess.Board()
 engine = chess.engine.SimpleEngine.popen_uci("/usr/bin/stockfish")
-cap = cv2.VideoCapture(2)
+cap = cv2.VideoCapture(3)
 
 img1 = None
 img2 = None

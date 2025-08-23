@@ -39,6 +39,14 @@ void ServoChess::move(int target, float percent, int duration, int steps) {
     position = target;
 }
 
+
+void ServoChess::moveStep(int target, int step) {
+    int &current = this->position;
+    int signal       = (target > current) ? 1 : -1;
+    step *= signal;
+    this->move(current+step, 1, 300);
+}
+
 void ServoChess::pos_default() {
     this->move(this->initial);
 }
