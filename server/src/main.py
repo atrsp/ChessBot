@@ -4,13 +4,20 @@ import chess
 import chess.engine
 from diff import diff
 
+
+CAMERA_INDEX=3
+STOCKFISH_PATH="/usr/bin/stockfish"
+DEPTH=30
+LIMIT=0.1 # 1s
+
+
 app = Flask(__name__)
 board = chess.Board()
-engine = chess.engine.SimpleEngine.popen_uci("/usr/bin/stockfish")
-cap = cv2.VideoCapture(3)
-
+engine = chess.engine.SimpleEngine.popen_uci(STOCKFISH_PATH)
+cap = cv2.VideoCapture(CAMERA_INDEX)
 img1 = None
 img2 = None
+
 
 def is_standard_move(changed):
     return len(changed) == 2
@@ -19,15 +26,12 @@ def is_capture_move(changed):
     return len(changed) == 1
 
 def square_to_matrix_coords(square):
-    """
-    Converte uma casa de chess (chess.SQUARE_* ou string 'e2') para índices de matriz 8x8.
-    Retorna (row, col) = (0..7, 0..7)
-    """
     if isinstance(square, str):
         square = chess.parse_square(square)
     
-    col = chess.square_file(square)   # 0=a, 7=h
-    row = chess.square_rank(square)   # 0=1, 7=8
+    col = chess.square_file(square)
+    row = chess.square_rank(square)
+
     return (row, abs(col - 7))
 
 def get_latest_frame(cap, discard=10):
@@ -120,7 +124,7 @@ def confirm_opponent_move():
 
 @app.route("/get-best-move", methods=["GET"])
 def get_best_move():
-    result = engine.play(board, chess.engine.Limit(time=0.1))
+    result = engine.play(board, chess.engine.Limit(time=LIMIT, depth=DEPTH))
     move = result.move
 
     origin = square_to_matrix_coords(move.from_square)
@@ -132,10 +136,19 @@ def get_best_move():
 
     board.push(move)
 
+    castling_type = 0
+
+    if board.is_castling(move):
+        if move.to_square > move.from_square:
+            castling_type = 1
+        else:
+            castling_type = 2
+
     return jsonify({
         "from": origin,
         "to": destiny,
         "captured": piece != None,
+        "castling": castling_type,
     }), 200
 
 
