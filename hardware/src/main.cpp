@@ -16,7 +16,7 @@ ServoChess  servoBase(pinServoBase, POS_INITIAL.base);
 ServoChess  servoLeft(pinServoLeft, POS_INITIAL.left);
 ServoChess  servoRight(pinServoRight, POS_INITIAL.right);
 HTTPClient  http;
-const char* server  = "http://192.168.245.126:5000";
+const char* server  = "http://172.20.10.8:5000";
 Bounce      confirm = Bounce();
 
 class Move {
@@ -77,8 +77,9 @@ void gotoPositionDown(ServoPosition p, VerticalTuning f) {
 }
 
 void gotoPositionUp(ServoPosition p, VerticalTuning f) {
-    int remainingLeft  = abs(servoLeft.position - p.left * f.percent);
-    int remainingRight = abs(servoRight.position - p.right * f.percent);
+    float percent = 1 - f.percent;
+    int remainingLeft  = abs((servoLeft.position - p.left) * percent);
+    int remainingRight = abs((servoRight.position - p.right) * percent);
 
     int stepsRight = remainingRight / f.deltaRight;
     int stepsLeft  = remainingLeft / f.deltaLeft;
@@ -182,6 +183,9 @@ BestMove getBestMove() {
 void executeRobotMove(BestMove move) {
     Serial.println("Executando jogada no ROBO...");
 
+
+    gotoPositionDefault();
+
     ServoPosition  from = CHESSBOARD_POSITIONS[move.from.row][move.from.column];
     VerticalTuning from_vt =
         CHESSBOARD_VERTICAL_TUNNING[move.from.row][move.from.column];
@@ -233,7 +237,7 @@ void resetGame() {
 void setup() {
     Serial.begin(115200);
 
-    setup_wifi("S23", "12345678.");
+    setup_wifi("iPhone de Felipe", "felipeoi");
 
     pinMode(pinMagnet, OUTPUT);
     digitalWrite(pinMagnet, LOW);
@@ -247,35 +251,37 @@ void setup() {
 }
 
 void loop() {
-    // enableMagnet();
-    // delay(5000);
-    // for (int i = 3; i < 8; i++) {
-    //     for (int j = 0; j < 8; j++) {
-    //         ServoPosition p = CHESSBOARD_POSITIONS[i][j];
-    //         VerticalTuning f = CHESSBOARD_VERTICAL_TUNNING[i][j];
-    //         gotoPositionDown(p, f);
-    //         delay(1000);
-    //         gotoPositionUp(POS_INITIAL, f);
-    //         delay(5000);
-    //     }
-    // }
+    //enableMagnet();
+    //delay(5000);
+//
+    //for (int j = 0; j < 8; j++) {
+    //    ServoPosition  p = CHESSBOARD_POSITIONS[6][j];
+    //    VerticalTuning f = CHESSBOARD_VERTICAL_TUNNING[6][j];
+    //    gotoPositionDown(p, f);
+    //    disableMagnet();
+    //    delay(1000);
+    //    enableMagnet();
+    //    
+    //    gotoPositionUp(POS_INITIAL, f);
+    //    delay(2000);
+    //}
+//
+    //disableMagnet();
+    //while (1);
 
-    // disableMagnet();
-    // while (1);
+     captureBoardState();
+     waitOpponentMove();
 
-    captureBoardState();
-    waitOpponentMove();
+     int httpCode = -1;
 
-    int httpCode = -1;
+     while (httpCode < 0) {
+         String url = String(server) + String("/confirm-opponent-move");
 
-    while (httpCode < 0) {
-        String url = String(server) + String("/confirm-opponent-move");
-
-        http.begin(url);
-        httpCode = http.GET();
-        http.end();
-        Serial.printf("HTT CODE: %d\n", httpCode);
-    }
+         http.begin(url);
+         httpCode = http.GET();
+         http.end();
+         Serial.printf("HTT CODE: %d\n", httpCode);
+     }
 
     BestMove move = getBestMove();
     executeRobotMove(move);

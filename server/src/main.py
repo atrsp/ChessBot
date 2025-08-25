@@ -5,7 +5,7 @@ import chess.engine
 from diff import diff
 
 
-CAMERA_INDEX=3
+CAMERA_INDEX=2
 STOCKFISH_PATH="/usr/bin/stockfish"
 DEPTH=30
 LIMIT=0.1 # 1s
