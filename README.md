@@ -4,13 +4,13 @@
 
 O ChessBOT é um projeto de um jogador de xadrez autônomo, materializado em uma garra robótica capaz de disputar uma partida de xadrez contra um oponente humano de forma independente. O sistema utiliza visão computacional para identificar as jogadas do adversário, uma engine de xadrez para calcular seus próprios movimentos e um braço robótico para mover as peças no tabuleiro.
 
-Este projeto foi desenvolvido como parte da disciplina "PROJETO INTEGRADO DE COMPUTAÇÃO II".
+Este projeto foi desenvolvido como parte da disciplina "PROJETO INTEGRADO DE COMPUTAÇÃO II" na Universidade Federal do Espírito Santo.
 
 ### Autores
-* Ana Tereza Pereira
-* Felipe de Albuquerque
-* Luiz Felipe Machado
-* Vitor Dadalto
+* [Ana Tereza Ribeiro Soares Pereira](https://github.com/atrsp)
+* [Felipe Mattos Vanetti de Albuquerque](https://github.com/felipemattosv)
+* [Luiz Felipe Machado](https://github.com/luizfelmach)
+* [Vitor Dadalto Câmara Gomes](https://github.com/vitordcgomes)
 
 ---
 
@@ -70,7 +70,7 @@ A montagem do braço robótico seguiu as instruções detalhadas no vídeo [EEZY
 O software do ChessBOT é dividido em dois componentes principais: o sistema de visão computacional para detectar a jogada do oponente e a engine de xadrez para a tomada de decisão.
 
 ### Visão Computacional
-Foi utilizada a biblioteca **OpenCV** em Python para identificar a jogada do oponente. A estratégia consiste em capturar uma imagem do tabuleiro antes e outra depois do movimento do oponente para identificar as diferenças.
+Foi utilizada a biblioteca [**OpenCV**](https://opencv.org/) em Python para identificar a jogada do oponente. A estratégia consiste em capturar uma imagem do tabuleiro antes e outra depois do movimento do oponente para identificar as diferenças.
 
 O processo ocorre em três etapas:
 
@@ -79,7 +79,7 @@ O processo ocorre em três etapas:
 3.  **Detecção do Movimento:** Com as imagens "antes" e "depois" normalizadas, o sistema calcula a diferença entre elas. Uma operação com kernel é aplicada para reduzir ruídos. As diferenças mais significativas são usadas para determinar o movimento realizado.
 
 ### Engine de Xadrez
-A inteligência do robô é fornecida pela **Stockfish**, uma engine de xadrez de código aberto.
+A inteligência do robô é fornecida pela [**Stockfish**](https://stockfishchess.org/), uma engine de xadrez de código aberto.
 
 * **Funcionamento:** A Stockfish recebe a configuração atual do tabuleiro (a "posição") e calcula qual seria a melhor jogada.
 * **Análise:** Além de sugerir a jogada, a engine fornece uma avaliação numérica que indica se as peças brancas ou pretas estão em vantagem e o tamanho dessa vantagem.
@@ -92,6 +92,15 @@ Algumas decisões foram tomadas para garantir a funcionalidade e a robustez do s
 
 * **Botões de Confirmação:** Foram adicionados botões de confirmação de jogada para determinar o momento exato de tirar a foto que identificará o movimento do oponente.
 * **Adesivos das Peças:** As cores vermelha e verde foram escolhidas por se diferenciarem bem do preto e branco do tabuleiro, facilitando a identificação da jogada por visão computacional.
+---
+
+## Organização do repositório
+
+Neste repositório, além do código principal, que integra a visão computacional com a lógica de jogo e a engine de xadrez, também existe uma interface que facilita o mapeamento das posições do tabuleiro.
+
+##Como rodar?
+
+
 
 ***
 ***
@@ -102,13 +111,13 @@ Algumas decisões foram tomadas para garantir a funcionalidade e a robustez do s
 
 ChessBOT is an autonomous chess player project, embodied by a robotic arm capable of playing a game of chess against a human opponent on its own. The system uses computer vision to identify the opponent's moves, a chess engine to calculate its own moves, and a robotic arm to move the pieces on the board.
 
-This project was developed as part of the "INTEGRATED COMPUTING PROJECT II" course.
+This project was developed as part of the "INTEGRATED COMPUTING PROJECT II" course at the Federal University of Espírito Santo.
 
 ### Authors
-* Ana Tereza Pereira
-* Felipe de Albuquerque
-* Luiz Felipe Machado
-* Vitor Dadalto
+* [Ana Tereza Ribeiro Soares Pereira](https://github.com/atrsp)
+* [Felipe Mattos Vanetti de Albuquerque](https://github.com/felipemattosv)
+* [Luiz Felipe Machado](https://github.com/luizfelmach)
+* [Vitor Dadalto Câmara Gomes](https://github.com/vitordcgomes)
 
 ---
 
@@ -168,7 +177,7 @@ The assembly of the robotic arm followed the detailed instructions in the video 
 The ChessBOT's software is divided into two main components: the computer vision system to detect the opponent's move and the chess engine for decision-making.
 
 ### Computer Vision
-The **OpenCV** library in Python was used to identify the opponent's move. The strategy is to capture an image of the board before and another after the opponent's move to identify the differences.
+The [**OpenCV**](https://opencv.org/) library in Python was used to identify the opponent's move. The strategy is to capture an image of the board before and another after the opponent's move to identify the differences.
 
 The process occurs in three stages:
 
@@ -177,7 +186,7 @@ The process occurs in three stages:
 3.  **Move Detection:** With the normalized "before" and "after" images, the system calculates the difference between them. A kernel operation is applied to reduce noise. The most significant differences are used to determine the move that was made.
 
 ### Chess Engine
-The robot's intelligence is provided by **Stockfish**, an open-source chess engine.
+The robot's intelligence is provided by [**Stockfish**](https://stockfishchess.org/), an open-source chess engine.
 
 * **Functionality:** Stockfish receives the current board configuration (the "position") and calculates what the best move would be.
 * **Analysis:** In addition to suggesting a move, the engine provides a numerical evaluation that indicates whether the white or black pieces have an advantage and the size of that advantage.
