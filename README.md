@@ -98,8 +98,18 @@ Algumas decisões foram tomadas para garantir a funcionalidade e a robustez do s
 
 Neste repositório, além do código principal, que integra a visão computacional com a lógica de jogo e a engine de xadrez, também existe uma interface que facilita o mapeamento das posições do tabuleiro.
 
-##Como rodar?
-
+## Como rodar?
+### Jogador Autônomo de Xadrez
+1. Iniciar um servidor
+2. lalalal
+3. lallala
+4. lalaala
+   
+### Interface de mapeamento
+1. Iniciar um servidor
+2. eu acho
+3. eu acho
+4. eu acho
 
 
 ***
