@@ -4,12 +4,12 @@
 #include <math.h>
 
 // Wi-Fi
-const char* ssid = "Vitor";
-const char* password = "20212022";
+const char* ssid = "iPhone de Felipe";
+const char* password = "felipeoi";
 
 
 // MQTT
-const char* mqtt_server = "172.20.10.2";
+const char* mqtt_server = "172.20.10.8";
 const char* mqtt_topic = "braco/comando";
 
 WiFiClient espClient;

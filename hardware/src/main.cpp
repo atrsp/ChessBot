@@ -38,14 +38,16 @@ class BestMove {
     Move from;
     Move to;
     bool captured;
+    int  castling;
 
     BestMove() {
     }
 
-    BestMove(Move from, Move to, bool captured) {
+    BestMove(Move from, Move to, bool captured, int castling) {
         this->from     = from;
         this->to       = to;
         this->captured = captured;
+        this->castling = castling;
     }
 };
 
@@ -77,9 +79,9 @@ void gotoPositionDown(ServoPosition p, VerticalTuning f) {
 }
 
 void gotoPositionUp(ServoPosition p, VerticalTuning f) {
-    float percent = 1 - f.percent;
-    int remainingLeft  = abs((servoLeft.position - p.left) * percent);
-    int remainingRight = abs((servoRight.position - p.right) * percent);
+    float percent        = 1 - f.percent;
+    int   remainingLeft  = abs((servoLeft.position - p.left) * percent);
+    int   remainingRight = abs((servoRight.position - p.right) * percent);
 
     int stepsRight = remainingRight / f.deltaRight;
     int stepsLeft  = remainingLeft / f.deltaLeft;
@@ -159,14 +161,15 @@ BestMove getBestMove() {
             int  to_row   = doc["to"][0];
             int  to_col   = doc["to"][1];
             bool captured = doc["captured"];
+            int  castling = doc["castling"];
             Move from(from_row, from_col);
             Move to(to_row, to_col);
 
             Serial.printf("From: (%d, %d)\n", from_row, from_col);
             Serial.printf("To: (%d, %d)\n", to_row, to_col);
-            Serial.printf("Captured: %d \n", captured);
+            Serial.printf("Captured: %d Castling: %d\n", captured, castling);
 
-            return BestMove(from, to, captured);
+            return BestMove(from, to, captured, castling);
         }
     }
 
@@ -182,7 +185,6 @@ BestMove getBestMove() {
 
 void executeRobotMove(BestMove move) {
     Serial.println("Executando jogada no ROBO...");
-
 
     gotoPositionDefault();
 
@@ -215,6 +217,49 @@ void executeRobotMove(BestMove move) {
     delay(500);
     disableMagnet();
     gotoPositionUp(POS_INITIAL, to_vt);
+
+    if (move.castling) {
+        gotoPositionDefault();
+        if (move.castling == 1) {
+            ServoPosition  from    = CHESSBOARD_POSITIONS[7][0];
+            VerticalTuning from_vt = CHESSBOARD_VERTICAL_TUNNING[7][0];
+
+            ServoPosition  to    = CHESSBOARD_POSITIONS[7][2];
+            VerticalTuning to_vt = CHESSBOARD_VERTICAL_TUNNING[7][2];
+
+            gotoPositionDown(from, from_vt);
+            delay(1000);
+            enableMagnet();
+            delay(500);
+            gotoPositionUp(POS_INITIAL, from_vt);
+
+            delay(1000);
+            gotoPositionDown(to, to_vt);
+            delay(500);
+            disableMagnet();
+            gotoPositionUp(POS_INITIAL, to_vt);
+        }
+
+        if (move.castling == 2) {
+            ServoPosition  from    = CHESSBOARD_POSITIONS[7][7];
+            VerticalTuning from_vt = CHESSBOARD_VERTICAL_TUNNING[7][7];
+
+            ServoPosition  to    = CHESSBOARD_POSITIONS[7][4];
+            VerticalTuning to_vt = CHESSBOARD_VERTICAL_TUNNING[7][4];
+
+            gotoPositionDown(from, from_vt);
+            delay(1000);
+            enableMagnet();
+            delay(500);
+            gotoPositionUp(POS_INITIAL, from_vt);
+
+            delay(1000);
+            gotoPositionDown(to, to_vt);
+            delay(500);
+            disableMagnet();
+            gotoPositionUp(POS_INITIAL, to_vt);
+        }
+    }
 }
 
 void waitOpponentMove() {
@@ -251,37 +296,37 @@ void setup() {
 }
 
 void loop() {
-    //enableMagnet();
-    //delay(5000);
-//
-    //for (int j = 0; j < 8; j++) {
+    // enableMagnet();
+    // delay(5000);
+    //
+    // for (int j = 0; j < 8; j++) {
     //    ServoPosition  p = CHESSBOARD_POSITIONS[6][j];
     //    VerticalTuning f = CHESSBOARD_VERTICAL_TUNNING[6][j];
     //    gotoPositionDown(p, f);
     //    disableMagnet();
     //    delay(1000);
     //    enableMagnet();
-    //    
+    //
     //    gotoPositionUp(POS_INITIAL, f);
     //    delay(2000);
     //}
-//
-    //disableMagnet();
-    //while (1);
+    //
+    // disableMagnet();
+    // while (1);
 
-     captureBoardState();
-     waitOpponentMove();
+    captureBoardState();
+    waitOpponentMove();
 
-     int httpCode = -1;
+    int httpCode = -1;
 
-     while (httpCode < 0) {
-         String url = String(server) + String("/confirm-opponent-move");
+    while (httpCode < 0) {
+        String url = String(server) + String("/confirm-opponent-move");
 
-         http.begin(url);
-         httpCode = http.GET();
-         http.end();
-         Serial.printf("HTT CODE: %d\n", httpCode);
-     }
+        http.begin(url);
+        httpCode = http.GET();
+        http.end();
+        Serial.printf("HTT CODE: %d\n", httpCode);
+    }
 
     BestMove move = getBestMove();
     executeRobotMove(move);

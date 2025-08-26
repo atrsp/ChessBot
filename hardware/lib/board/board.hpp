@@ -184,8 +184,8 @@ const ServoPosition CHESSBOARD_POSITIONS[8][8] = {
         {850, 1855, 1280},  // A7 - alterado (célula amarela)
         {1010, 1795, 1268}, // B7 - alterado (célula amarela)
         {1170, 1785, 1247}, // C7 - alterado (célula amarela)
-        {1340, 1770, 1245}, // D7 - alterado (célula amarela)
-        {1580, 1770, 1245}, // E7 - alterado (célula amarela)
+        {1360, 1750, 1245}, // D7 - alterado (célula amarela)
+        {1580, 1750, 1245}, // E7 - alterado (célula amarela)
         {1765, 1785, 1255}, // F7 - alterado (célula amarela)
         {1940, 1820, 1268}, // G7 - alterado (célula amarela)
         {2105, 1860, 1285}  // H7 - alterado (célula amarela)
@@ -218,6 +218,6 @@ ServoPosition POS_INITIAL = {
 
 ServoPosition POS_THRASH = {
     2500,
-    2400,
-    800,
+    2100,
+    1200,
 };
