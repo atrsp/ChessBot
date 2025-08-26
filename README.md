@@ -43,7 +43,7 @@ A seguir estão os itens utilizados na construção do ChessBOT.
 A estrutura física do braço robótico e suas peças foram produzidas com uma impressora 3D.
 
 ### Braço Robótico
-O modelo base utilizado para o braço foi o **EEZYbotARM MK2**, um projeto gratuito desenvolvido por "daGHIZmo".
+O modelo base utilizado para o braço foi o [EEZYbotARM MK2](https://www.thingiverse.com/thing:1454048), um projeto gratuito desenvolvido por "daGHIZmo".
 
 ### Modificações e Melhorias
 O modelo original serviu como ponto de partida, mas não possuía o alcance e a precisão necessários para a aplicação. Por isso, foi necessário remodelar algumas peças.
@@ -61,7 +61,7 @@ Também foram impressos modelos 3D para componentes de suporte, como dois suport
 
 ## Montagem
 
-A montagem do braço robótico seguiu as instruções detalhadas em um vídeo de Chris Riley. Não foi feita nenhuma alteração nesse processo.
+A montagem do braço robótico seguiu as instruções detalhadas no vídeo [EEZYbotARM MK2 3D Printed Robot Build - Chris's Basement](https://www.youtube.com/watch?v=R2MI-tpXyS4&ab_channel=ChrisRiley) de Chris Riley. Não foi feita nenhuma alteração nesse processo.
 
 ---
 
@@ -141,7 +141,7 @@ The following are the items used in the construction of the ChessBOT.
 The physical structure of the robotic arm and its parts were produced using a 3D printer.
 
 ### Robotic Arm
-The base model used for the arm was the **EEZYbotARM MK2**, a free design developed by "daGHIZmo".
+The base model used for the arm was the [EEZYbotARM MK2](https://www.thingiverse.com/thing:1454048), a free design developed by "daGHIZmo".
 
 ### Modificações and Improvements
 The original model served as a starting point, but it lacked the necessary reach and precision for the application. Therefore, it was necessary to remodel some parts.
@@ -159,7 +159,7 @@ Bases for the coins were developed and printed to make it easier for the arm to 
 
 ## Assembly
 
-The assembly of the robotic arm followed the detailed instructions in a video by Chris Riley. No alterations were made to this process.
+The assembly of the robotic arm followed the detailed instructions in the video [EEZYbotARM MK2 3D Printed Robot Build - Chris's Basement](https://www.youtube.com/watch?v=R2MI-tpXyS4&ab_channel=ChrisRiley) by Chris Riley. No alterations were made to this process.
 
 ---
 
