@@ -50,7 +50,9 @@ O modelo original serviu como ponto de partida, mas não possuía o alcance e a 
 
 * **Engrenagem:** Após a montagem, foi identificada uma grande folga na engrenagem, causando uma imprecisão de uma casa no tabuleiro. A peça foi redesenhada para corrigir seu módulo, o que diminuiu a folga.
 * **Base do Eletroímã:** O projeto original possuía uma garra na ponta do braço. Como o ChessBOT utiliza um eletroímã, foi modelada uma nova peça para acoplar este componente.
-* **Peças de Xadrez:** Foram desenvolvidas e impressas bases para as moedas para facilitar o movimento do braço ao pegar cada peça e aumentar a jogabilidade do oponente.
+
+### Peças de Xadrez
+Foram desenvolvidas e impressas bases para as moedas para facilitar o movimento do braço ao pegar cada peça e aumentar a jogabilidade do oponente.
 
 ### Peças Auxiliares
 Também foram impressos modelos 3D para componentes de suporte, como dois suportes para descarte de peças capturadas e dois suportes para os botões.
@@ -146,7 +148,9 @@ The original model served as a starting point, but it lacked the necessary reach
 
 * **Gear:** After assembly, a large backlash was identified in the gear, causing an imprecision of one square on the board. The part was redesigned to correct its module, which reduced the backlash.
 * **Electromagnet Base:** The original design featured a claw at the end of the arm. As the ChessBOT uses an electromagnet, a new part was modeled to attach this component.
-* **Chess Pieces:** Bases for the coins were developed and printed to make it easier for the arm to pick up each piece and to improve the opponent's gameplay experience.
+
+###Chess Pieces
+Bases for the coins were developed and printed to make it easier for the arm to pick up each piece and to improve the opponent's gameplay experience.
 
 ### Auxiliary Parts
 3D models were also printed for support components, such as two holders for captured pieces and two holders for the buttons.
