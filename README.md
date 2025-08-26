@@ -1,4 +1,4 @@
-# ChessBOT - README
+# ChessBOT
 
 ## Visão Geral
 
@@ -94,7 +94,7 @@ Algumas decisões foram tomadas para garantir a funcionalidade e a robustez do s
 ***
 ***
 
-# ChessBOT - README (English Translation)
+# ChessBOT (English)
 
 ## Overview
 
