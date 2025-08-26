@@ -22,8 +22,10 @@ img2 = None
 def is_standard_move(changed):
     return len(changed) == 2
 
-def is_capture_move(changed):
-    return len(changed) == 1
+
+def is_castling(changed):
+    return len(changed) == 4
+
 
 def square_to_matrix_coords(square):
     if isinstance(square, str):
@@ -92,30 +94,24 @@ def confirm_opponent_move():
             board.push(move)
         else:
             print("Movimento ilegal!")
+    
+    if is_castling(changed):
+        move  = ""
+        if "a1" in changed:
+            # Roque grande
+            move = "e1c1"
+            
+        if "h1" in changed:
+            # Roque pequeno
+            move = "e1g1"
 
-    if is_capture_move(changed):
-        square1 = chess.parse_square(changed[0])
-
-        piece1 = board.piece_at(square1)
-
-        move = ""
-        captured = False
-
-        if piece1 != None and piece1.color == chess.WHITE:
-            move = f"{changed[0]}{changed[1]}"
-            captured = piece2 != None
-
-        if piece2 != None and piece2.color == chess.WHITE:
-            move = f"{changed[1]}{changed[0]}"
-            captured = piece1 != None
-        
         move = chess.Move.from_uci(move)
-        print(captured)
 
         if move in board.legal_moves:
             board.push(move)
         else:
             print("Movimento ilegal!")
+        
 
     print(board)
     print(changed)
@@ -134,15 +130,19 @@ def get_best_move():
 
     print(origin, destiny)
 
-    board.push(move)
 
     castling_type = 0
 
     if board.is_castling(move):
         if move.to_square > move.from_square:
-            castling_type = 1
+            castling_type = 1 # Roque pequeno
         else:
-            castling_type = 2
+            castling_type = 2 # Roque Grande
+
+
+    board.push(move)
+    print(board)
+    
 
     return jsonify({
         "from": origin,
