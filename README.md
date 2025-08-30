@@ -81,7 +81,7 @@ O processo ocorre em três etapas:
 ### Engine de Xadrez
 A inteligência do robô é fornecida pela [**Stockfish**](https://stockfishchess.org/), uma engine de xadrez de código aberto.
 
-* **Funcionamento:** A Stockfish recebe a configuração atual do tabuleiro (a "posição") e calcula qual seria a melhor jogada.
+* **Funcionamento:** A Stockfish recebe a configuração atual do tabuleiro (a disposição das peças no tabuleiro) e calcula qual seria a melhor jogada.
 * **Análise:** Além de sugerir a jogada, a engine fornece uma avaliação numérica que indica se as peças brancas ou pretas estão em vantagem e o tamanho dessa vantagem.
 
 ---
@@ -99,6 +99,116 @@ Algumas decisões foram tomadas para garantir a funcionalidade e a robustez do s
 Neste repositório, além do código principal, que integra a visão computacional com a lógica de jogo e a engine de xadrez, também existe uma interface que facilita o mapeamento das posições do tabuleiro.
 
 ## Como rodar?
+
+### Pré-requisitos
+
+Antes de iniciar, garanta que você possui instalado em sua máquina:  
+- Visual Studio Code ([VSCode](https://code.visualstudio.com/))
+- Extensão [PlatformIO](https://platformio.org/install/ide?install=vscode) no VSCode  
+- [Node.js v20.19.4](https://nodejs.org/en/download/)  
+- [Python 3.13.5](https://www.python.org/downloads/)  
+- [Mosquitto MQTT Broker](https://mosquitto.org/download/)  
+- Webcam conectada ao computador  
+- Sistema operacional Linux (ou adaptado para Windows/macOS, quando aplicável)  
+
+---
+
+## Passo a Passo para rodar a interface de mapeamento.
+
+### 1. Configuração do Hardware (ESP32)
+1. Abra o **VSCode** com a extensão **PlatformIO**.  
+3. Abra a pasta `Hardware/`.  
+   - As dependências serão instaladas automaticamente via `platformio.ini`.  
+4. Compile e envie o código para o ESP32 com o PlatformIO.  
+   - O arquivo principal é `Hardware/src/main.cpp`.  
+
+---
+
+### 2. Configuração do Mapeamento do Tabuleiro
+1. Instale e configure o **Mosquitto Broker**.  
+   Edite o arquivo `/etc/mosquitto/mosquitto.conf` com o seguinte conteúdo:  
+   ```conf
+   listener 1883
+   protocol mqtt
+
+   listener 9001
+   protocol websockets
+
+   allow_anonymous true
+   ```  
+   Inicie o serviço:  
+   ```bash
+   sudo systemctl start mosquitto.service
+   ```  
+
+2. Configure as constantes no arquivo `Hardware/map.cpp` (Wi-Fi, senha, IP do broker e tópico MQTT).  
+
+3. Acesse a interface de mapeamento:  
+   - Entre na pasta `ui/`.  
+   - Instale as dependências:  
+     ```bash
+     npm install
+     ```  
+   - Rode o servidor:  
+     ```bash
+     npm run dev
+     ```  
+   - Acesse em: [http://localhost:3000](http://localhost:3000).  
+
+---
+
+### 3. Configuração do Servidor de Inteligência (Engine + Visão Computacional)
+1. Baixe o **Stockfish** em: [https://stockfishchess.org/download/](https://stockfishchess.org/download/).  
+2. Mova o binário para:  
+   ```bash
+   sudo mv stockfish /usr/local/bin/stockfish
+   ```  
+
+3. Vá para a pasta `server/` e crie um ambiente virtual:  
+   ```bash
+   python3 -m venv .venv
+   source .venv/bin/activate
+   ```  
+
+4. Instale as dependências:  
+   ```bash
+   pip install -r requirements.txt
+   ```  
+
+5. Certifique-se de que a webcam está funcionando.  
+
+6. Inicie o servidor Python:  
+   ```bash
+   python src/main.py
+   ```  
+
+7. (Opcional) A visão computacional pode ser testada separadamente via Jupyter Notebook na pasta `vision/`.  
+
+---
+
+### 4. Configuração da Interface do Jogo
+1. Entre na pasta `chess/`.  
+2. Instale as dependências:  
+   ```bash
+   npm install
+   ```  
+3. Rode o servidor da interface:  
+   ```bash
+   npm run dev
+   ```  
+4. Acesse em: [http://localhost:3000](http://localhost:3000).  
+
+---
+
+## Fluxo Geral de Execução
+1. Subir o código no **ESP32**.  
+2. Iniciar o **broker MQTT (Mosquitto)**.  
+3. Rodar a **interface de mapeamento (ui/)** para calibrar o tabuleiro.  
+4. Iniciar o **servidor Python (server/)** com Stockfish + visão computacional.  
+5. Abrir a **interface do jogo (chess/)** e começar a jogar contra o braço robótico.  
+
+
+   
 ### Jogador Autônomo de Xadrez
 1. Iniciar um servidor
 2. lalalal
