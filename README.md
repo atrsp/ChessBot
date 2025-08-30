@@ -4,7 +4,7 @@
 
 O ChessBOT é um projeto de um jogador de xadrez autônomo, materializado em uma garra robótica capaz de disputar uma partida de xadrez contra um oponente humano de forma independente. O sistema utiliza visão computacional para identificar as jogadas do adversário, uma engine de xadrez para calcular seus próprios movimentos e um braço robótico para mover as peças no tabuleiro.
 
-Este projeto foi desenvolvido como parte da disciplina "PROJETO INTEGRADO DE COMPUTAÇÃO II" na Universidade Federal do Espírito Santo.
+Este projeto foi desenvolvido como parte da disciplina "PROJETO INTEGRADO DE COMPUTAÇÃO II" na Universidade Federal do Espírito Santo (UFES).
 
 ### Autores
 * [Ana Tereza Ribeiro Soares Pereira](https://github.com/atrsp)
@@ -102,30 +102,22 @@ Neste repositório, além do código principal, que integra a visão computacion
 
 ### Pré-requisitos
 
-Antes de iniciar, garanta que você possui instalado em sua máquina:  
+Antes de iniciar, garanta que você possui configurado em sua máquina:  
 - Visual Studio Code ([VSCode](https://code.visualstudio.com/))
 - Extensão [PlatformIO](https://platformio.org/install/ide?install=vscode) no VSCode  
 - [Node.js v20.19.4](https://nodejs.org/en/download/)  
 - [Python 3.13.5](https://www.python.org/downloads/)  
 - [Mosquitto MQTT Broker](https://mosquitto.org/download/)  
 - Webcam conectada ao computador  
-- Sistema operacional Linux (ou adaptado para Windows/macOS, quando aplicável)  
+- Sistema operacional Linux (ou adaptado para Windows/macOS, quando aplicável)
+- O ESP32 e a máquina que estará responsável pelos servidores durante o jogo devem sempre estar conectados na mesma rede WiFi.
+  - Para verificar o IP da sua máquina na rede, utilize `ifconfig`.
 
 ---
 
-## Passo a Passo para rodar a interface de mapeamento.
-
-### 1. Configuração do Hardware (ESP32)
-1. Abra o **VSCode** com a extensão **PlatformIO**.  
-3. Abra a pasta `Hardware/`.  
-   - As dependências serão instaladas automaticamente via `platformio.ini`.  
-4. Compile e envie o código para o ESP32 com o PlatformIO.  
-   - O arquivo principal é `Hardware/src/main.cpp`.  
-
----
-
-### 2. Configuração do Mapeamento do Tabuleiro
-1. Instale e configure o **Mosquitto Broker**.  
+### Passo a Passo para rodar a interface de mapeamento (apenas durante a etapa de mapeamento das posições do tabuleiro).
+     
+1. Configure o **Mosquitto Broker**.  
    Edite o arquivo `/etc/mosquitto/mosquitto.conf` com o seguinte conteúdo:  
    ```conf
    listener 1883
@@ -139,9 +131,15 @@ Antes de iniciar, garanta que você possui instalado em sua máquina:
    Inicie o serviço:  
    ```bash
    sudo systemctl start mosquitto.service
-   ```  
+   ```
+   
+2. Configuração do Hardware (ESP32):
+   - Abra o **VSCode** com a extensão **PlatformIO**.  
+   - Abra a pasta `Hardware/`.  
+      - As dependências serão instaladas automaticamente via `platformio.ini`.
+   - Configure as constantes no arquivo `Hardware/map.cpp` (nome e senha da rede Wi-Fi, IP do broker e tópico MQTT).
+   - Compile e envie o código `map.cpp` para o ESP32 com o PlatformIO. Tenha em mente que somente o código que está dentro da pasta `src/` é compilado e enviado para o microcontrolador.
 
-2. Configure as constantes no arquivo `Hardware/map.cpp` (Wi-Fi, senha, IP do broker e tópico MQTT).  
 
 3. Acesse a interface de mapeamento:  
    - Entre na pasta `ui/`.  
@@ -153,16 +151,19 @@ Antes de iniciar, garanta que você possui instalado em sua máquina:
      ```bash
      npm run dev
      ```  
-   - Acesse em: [http://localhost:3000](http://localhost:3000).  
+   - Acesse em: [`http://localhost:3000`](http://localhost:3000).  
 
+4. Salve os valores dos servos para cada posição do tabuleiro em `hardware/lib/board/board.hpp`
 ---
 
-### 3. Configuração do Servidor de Inteligência (Engine + Visão Computacional)
+### Passo a Passo para rodar o Servidor de Inteligência (Engine + Visão Computacional).
+
 1. Baixe o **Stockfish** em: [https://stockfishchess.org/download/](https://stockfishchess.org/download/).  
 2. Mova o binário para:  
    ```bash
-   sudo mv stockfish /usr/local/bin/stockfish
-   ```  
+   /usr/local/bin/stockfish
+   ```
+   Ou altere a constante `STOCKFISH_PATH` no arquivo `server/src/main.py` com o caminho para o local da sua instalação da stockfish.
 
 3. Vá para a pasta `server/` e crie um ambiente virtual:  
    ```bash
@@ -179,48 +180,60 @@ Antes de iniciar, garanta que você possui instalado em sua máquina:
 
 6. Inicie o servidor Python:  
    ```bash
-   python src/main.py
+   python3 src/main.py
    ```  
 
-7. (Opcional) A visão computacional pode ser testada separadamente via Jupyter Notebook na pasta `vision/`.  
-
+ 
 ---
 
-### 4. Configuração da Interface do Jogo
-1. Entre na pasta `chess/`.  
-2. Instale as dependências:  
+### Configuração da Interface do Jogo
+1. Configuração do Hardware (ESP32):
+   - Abra o **VSCode** com a extensão **PlatformIO**.  
+   - Abra a pasta `Hardware/`.  
+      - As dependências serão instaladas automaticamente via `platformio.ini`.
+   - Configure as constantes no arquivo `Hardware/main.cpp` (IP do servidor e porta do servidor criado na etapa anterior (Servidor de Inteligência)).
+      - O nome e senha da rede WiFi também precisam ser alterados dentro da função `void setup()`
+   - Compile e envie o código `main.cpp` para o ESP32 com o PlatformIO. Tenha em mente que somente o código que está dentro da pasta `src/` é compilado e enviado para o microcontrolador.
+     
+2. Entre na pasta `chess/`.  
+3. Instale as dependências:  
    ```bash
    npm install
    ```  
-3. Rode o servidor da interface:  
+4. Rode o servidor da interface:  
    ```bash
    npm run dev
-   ```  
-4. Acesse em: [http://localhost:3000](http://localhost:3000).  
+   ```
+5. Acesse o servidor em: [`http://localhost:3000`](http://localhost:3000).
+6. Se precisar reiniciar o jogo, basta clicar no botão de reset no ESP32 e reorganizar as peças no tabuleiro.
 
 ---
 
-## Fluxo Geral de Execução
-1. Subir o código no **ESP32**.  
-2. Iniciar o **broker MQTT (Mosquitto)**.  
-3. Rodar a **interface de mapeamento (ui/)** para calibrar o tabuleiro.  
-4. Iniciar o **servidor Python (server/)** com Stockfish + visão computacional.  
-5. Abrir a **interface do jogo (chess/)** e começar a jogar contra o braço robótico.  
+## Fluxo Geral de Execução (Mapeamento das posições do tabuleiro):
+1. Iniciar o **Broker MQTT (Mosquitto)** com o comando
+   ```bash
+   sudo systemctl start mosquitto.service
+   ```
+2. Alterar as constantes da rede WiFi e Broker no arquivo `hardware/map.cpp` e subir o código no **ESP32** pelo PlatformIO.  
+3. Abrir a **Interface de Mapeamento** na pasta `ui/` com `npm run dev` em [`http://localhost:3000`](http://localhost:3000) para calibrar as posições do tabuleiro.
+4. Salvar as posições mapeadas em `hardware/lib/board/board.hpp`.
+
+## Fluxo Geral de Execução (Jogo completo):
+1. Dentro da pasta `server/`, ative o **ambiente virtual (.venv)** rodando o seguinte comando.
+   ```bash
+   source .venv/bin/activate
+   ```
+2. Iniciar o **servidor Python** com Stockfish + visão computacional em `server/src/main.py`
+3. Alterar as constantes da rede WiFi e IP do server python no arquivo `hardware/src/main.cpp` e subir o código no **ESP32** pelo PlatformIO.  
+4. Abrir a **Interface do Jogo** na pasta `chess/` com `npm run dev` em [`http://localhost:3000`](http://localhost:3000) para começar a jogar contra o braço robótico.  
 
 
+### Opcional:
+A parte de visão computacional (identificação de movimentação das peças) pode ser testada separadamente via Jupyter Notebook na pasta `server/vision/`:
+
+   - O arquivo `takepic.py` é útil para descomplicar o processo de tirar uma foto antes e depois de mudar uma peça de uma posição para outra no tabuleiro e pode ser rodado primeiro para armazenar as fotos `before.jpg` e `after.jpg`   
+   - O Notebook `main.ipynb` carrega as imagens `before.jpg` e `after.jpg` e mostra todo o processamento sobre as imagens para identificar em quais posições do tabuleiro houve mudança. É útil para debuggar possíveis erros de identificação da jogada do oponente que possam ocorrer durante o jogo.
    
-### Jogador Autônomo de Xadrez
-1. Iniciar um servidor
-2. lalalal
-3. lallala
-4. lalaala
-   
-### Interface de mapeamento
-1. Iniciar um servidor
-2. eu acho
-3. eu acho
-4. eu acho
-
 
 ***
 ***
@@ -319,3 +332,164 @@ Certain decisions were made to ensure the system's functionality and robustness.
 
 * **Confirmation Buttons:** Move confirmation buttons were added to determine the exact moment to take the photo that will identify the opponent's move.
 * **Piece Stickers:** The red and green colors were chosen because they differentiate well from the black and white of the board, facilitating the move identification by computer vision.
+
+## How to run?
+
+### Prerequisites
+
+Before you start, make sure your machine has:
+
+* Visual Studio Code ([VSCode](https://code.visualstudio.com/))
+* [PlatformIO extension](https://platformio.org/install/ide?install=vscode) in VSCode
+* [Node.js v20.19.4](https://nodejs.org/en/download/)
+* [Python 3.13.5](https://www.python.org/downloads/)
+* [Mosquitto MQTT Broker](https://mosquitto.org/download/)
+* A webcam connected to the computer
+* Linux operating system (or adapted for Windows/macOS where applicable)
+* The ESP32 and the machine responsible for running the servers during the game must always be connected to the same Wi-Fi network.
+
+  * To check your machine’s IP on the network, use `ifconfig`.
+
+---
+
+### Step-by-step to run the mapping interface (only during the board-position mapping stage).
+
+1. Configure the **Mosquitto Broker**.
+   Edit `/etc/mosquitto/mosquitto.conf` with the following content:
+
+   ```conf
+   listener 1883
+   protocol mqtt
+
+   listener 9001
+   protocol websockets
+
+   allow_anonymous true
+   ```
+
+   Start the service:
+
+   ```bash
+   sudo systemctl start mosquitto.service
+   ```
+
+2. Hardware Setup (ESP32):
+
+   * Open **VSCode** with the **PlatformIO** extension.
+   * Open the `Hardware/` folder.
+
+     * Dependencies will be installed automatically via `platformio.ini`.
+   * Set the constants in `Hardware/map.cpp` (Wi-Fi SSID and password, broker IP, and MQTT topic).
+   * Compile and upload `map.cpp` to the ESP32 with PlatformIO. Keep in mind that only the code inside the `src/` folder is compiled and uploaded to the microcontroller.
+
+3. Access the mapping interface:
+
+   * Go into the `ui/` folder.
+   * Install dependencies:
+
+     ```bash
+     npm install
+     ```
+   * Run the dev server:
+
+     ```bash
+     npm run dev
+     ```
+   * Open: [`http://localhost:3000`](http://localhost:3000).
+
+4. Save the servo values for each board position in `hardware/lib/board/board.hpp`
+
+---
+
+### Step-by-step to run the Intelligence Server (Engine + Computer Vision).
+
+1. Download **Stockfish** at: [https://stockfishchess.org/download/](https://stockfishchess.org/download/).
+
+2. Move the binary to:
+
+   ```bash
+   /usr/local/bin/stockfish
+   ```
+
+   Or change the `STOCKFISH_PATH` constant in `server/src/main.py` to the path where Stockfish is installed on your system.
+
+3. Go to the `server/` folder and create a virtual environment:
+
+   ```bash
+   python3 -m venv .venv
+   source .venv/bin/activate
+   ```
+
+4. Install dependencies:
+
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+5. Make sure the webcam is working.
+
+6. Start the Python server:
+
+   ```bash
+   python3 src/main.py
+   ```
+
+---
+
+### Game Interface Setup
+
+1. Hardware Setup (ESP32):
+
+   * Open **VSCode** with the **PlatformIO** extension.
+   * Open the `Hardware/` folder.
+
+     * Dependencies will be installed automatically via `platformio.ini`.
+   * Set the constants in `Hardware/main.cpp` (server IP and the port of the server created in the previous step—Intelligence Server).
+
+     * The Wi-Fi SSID and password also need to be set inside the `void setup()` function.
+   * Compile and upload `main.cpp` to the ESP32 with PlatformIO. Keep in mind that only the code inside the `src/` folder is compiled and uploaded to the microcontroller.
+2. Go into the `chess/` folder.
+3. Install dependencies:
+
+   ```bash
+   npm install
+   ```
+4. Run the interface server:
+
+   ```bash
+   npm run dev
+   ```
+5. Access the interface at: [`http://localhost:3000`](http://localhost:3000).
+6. If you need to restart the game, just press the reset button on the ESP32 and rearrange the pieces on the board.
+
+---
+
+## Overall Execution Flow (Board position mapping):
+
+1. Start the **MQTT Broker (Mosquitto)** with:
+
+   ```bash
+   sudo systemctl start mosquitto.service
+   ```
+2. Update the Wi-Fi and Broker constants in `hardware/map.cpp` and upload the code to the **ESP32** via PlatformIO.
+3. Open the **Mapping Interface** in the `ui/` folder with `npm run dev` at [`http://localhost:3000`](http://localhost:3000) to calibrate the board positions.
+4. Save the mapped positions in `hardware/lib/board/board.hpp`.
+
+## Overall Execution Flow (Full game):
+
+1. Inside the `server/` folder, activate the **virtual environment (.venv)** by running:
+
+   ```bash
+   source .venv/bin/activate
+   ```
+2. Start the **Python server** with Stockfish + computer vision at `server/src/main.py`.
+3. Update the Wi-Fi constants and the Python server IP in `hardware/src/main.cpp` and upload the code to the **ESP32** via PlatformIO.
+4. Open the **Game Interface** in the `chess/` folder with `npm run dev` at [`http://localhost:3000`](http://localhost:3000) to start playing against the robotic arm.
+
+### Optional:
+
+The computer vision component (identifying piece movement) can be tested separately via Jupyter Notebook in the `server/vision/` folder:
+
+* The `takepic.py` file is useful to simplify taking a photo before and after moving a piece from one square to another, and can be run first to store the `before.jpg` and `after.jpg` images.
+* The `main.ipynb` notebook loads `before.jpg` and `after.jpg` and shows the entire processing pipeline on the images to identify which board squares changed. It’s useful for debugging possible errors in detecting the opponent’s move that may occur during the game.
+
