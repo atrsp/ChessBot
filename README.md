@@ -4,7 +4,7 @@
 
 O ChessBOT é um projeto de um jogador de xadrez autônomo, materializado em uma garra robótica capaz de disputar uma partida de xadrez contra um oponente humano de forma independente. O sistema utiliza visão computacional para identificar as jogadas do adversário, uma engine de xadrez para calcular seus próprios movimentos e um braço robótico para mover as peças no tabuleiro.
 
-Este projeto foi desenvolvido como parte da disciplina "PROJETO INTEGRADO DE COMPUTAÇÃO II" na Universidade Federal do Espírito Santo (UFES).
+Este projeto foi desenvolvido como parte da disciplina [PROJETO INTEGRADO DE COMPUTAÇÃO II](https://computacao-ufes.github.io/mostra/pic2_EC_20251.html) na Universidade Federal do Espírito Santo (UFES).
 
 ### Autores
 * [Ana Tereza Ribeiro Soares Pereira](https://github.com/atrsp)
