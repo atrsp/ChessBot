@@ -6,6 +6,8 @@ O ChessBOT é um projeto de um jogador de xadrez autônomo, materializado em uma
 
 Este projeto foi desenvolvido como parte da disciplina [PROJETO INTEGRADO DE COMPUTAÇÃO II](https://computacao-ufes.github.io/mostra/pic2_EC_20251.html) na Universidade Federal do Espírito Santo (UFES).
 
+<img src="/gif/game.gif">
+
 ### Autores
 * [Ana Tereza Ribeiro Soares Pereira](https://github.com/atrsp)
 * [Felipe Mattos Vanetti de Albuquerque](https://github.com/felipemattosv)
